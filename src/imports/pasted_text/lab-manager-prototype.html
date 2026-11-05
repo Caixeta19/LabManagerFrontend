@@ -1,0 +1,718 @@
+Crie um protótipo web de ALTA FIDELIDADE, moderno, profissional e totalmente INTERATIVO para um sistema chamado **LAB MANAGER — Sistema de Gestão de Laboratórios**.
+
+O objetivo do protótipo é servir como referência visual e funcional para uma equipe de desenvolvimento implementar posteriormente o sistema real. Portanto, não crie apenas telas estáticas: implemente navegação entre telas, estados, modais, formulários, feedbacks e fluxos realistas utilizando dados fictícios.
+
+## 1. CONCEITO DO PRODUTO
+
+O LAB MANAGER é um sistema acadêmico para gerenciamento de laboratórios de uma instituição de ensino.
+
+O sistema centraliza:
+
+* Reserva de laboratórios;
+* Consulta de disponibilidade;
+* Confirmação de reservas;
+* QR Code para entrada no laboratório;
+* Empréstimo de equipamentos;
+* Controle de devolução;
+* Controle de atrasos;
+* Gestão de usuários;
+* Gestão de laboratórios;
+* Gestão de equipamentos;
+* Acompanhamento geral das reservas.
+
+Existem três perfis:
+
+* ALUNO
+* PROFESSOR
+* ADMINISTRADOR
+
+Não utilizar elementos visuais relacionados a química, béqueres, tubos de ensaio ou fórmulas químicas. O conceito visual deve comunicar principalmente **agendamento, organização, controle, laboratório acadêmico e gestão**.
+
+## 2. IDENTIDADE VISUAL
+
+Criar uma identidade visual limpa, tecnológica e institucional.
+
+Cores principais:
+
+* Azul-petróleo escuro: #1E4B5C
+* Azul-petróleo escuro para hover: #153744
+* Verde-água: #3FA796
+* Fundo principal: #F7F9FA
+* Branco: #FFFFFF
+* Texto principal: #1C2733
+* Texto secundário: #5C6B7A
+* Bordas: #E2E7EB
+
+Cores semânticas:
+
+* Pendente: #E3A008
+* Confirmada / sucesso: #2E9E5B
+* Cancelada / erro: #C4433A
+* Expirada: #8A94A0
+* Em uso: #1E4B5C
+* Manutenção: #8A7B9C
+
+A interface deve ter aparência de um software SaaS acadêmico moderno, com bastante espaço em branco, cards limpos, bordas suaves, sombras muito discretas e excelente hierarquia visual.
+
+Evite excesso de gradientes, excesso de ícones, excesso de elementos decorativos e aparência genérica de dashboard.
+
+## 3. LOGO
+
+Utilize a marca **LAB MANAGER**.
+
+A identidade da marca deve priorizar o conceito de agendamento e gerenciamento.
+
+O símbolo deve ser minimalista e relacionado a:
+
+* calendário;
+* horário;
+* agendamento;
+* organização.
+
+Não utilizar béquer ou elementos de química.
+
+Caso não seja possível importar uma logo, criar um símbolo simples de calendário combinado com relógio utilizando azul-petróleo e verde-água.
+
+## 4. TIPOGRAFIA
+
+Utilizar preferencialmente:
+
+* Inter ou Manrope.
+
+Hierarquia:
+
+* Títulos: 700
+* Subtítulos e labels importantes: 600
+* Texto normal: 400
+* Status e informações destacadas: 600
+
+A interface deve ter excelente legibilidade.
+
+## 5. ESTRUTURA GERAL
+
+Criar uma aplicação desktop responsiva.
+
+Resolução principal de referência:
+
+1440 × 1024 px.
+
+Utilizar:
+
+* Sidebar fixa à esquerda;
+* Header da área de conteúdo;
+* Área principal com largura confortável;
+* Grid consistente;
+* Espaçamentos baseados em múltiplos de 8px.
+
+A sidebar deve possuir:
+
+LAB MANAGER
+
+GERAL
+
+* Dashboard
+* Laboratórios
+* Nova reserva
+* Minhas reservas
+* Equipamentos disponíveis
+* Meus empréstimos
+
+Para PROFESSOR adicionar:
+
+PROFESSOR
+
+* Todas as reservas
+
+Para ADMIN adicionar:
+
+GESTÃO
+
+* Usuários
+* Laboratórios
+* Equipamentos
+* Reservas
+* Empréstimos
+
+No rodapé da sidebar:
+
+* Avatar;
+* Nome do usuário;
+* Perfil;
+* Botão "Sair".
+
+A navegação deve mudar de acordo com o perfil.
+
+## 6. LOGIN
+
+Criar uma tela de login de alta fidelidade.
+
+Layout dividido em duas áreas.
+
+Lado esquerdo:
+
+* Identidade visual LAB MANAGER;
+* Mensagem principal;
+* Pequena explicação do sistema;
+* Visual relacionado a calendário, agendamento e laboratórios;
+* Indicadores visuais de reservas/status.
+
+Lado direito:
+
+* Logo;
+* Título "Entrar";
+* Texto explicativo;
+* Campo "E-mail institucional";
+* Campo "Senha";
+* Mostrar/ocultar senha;
+* Botão "Entrar";
+* Link "Esqueci minha senha";
+* Mensagens de validação.
+
+Criar estados:
+
+* formulário normal;
+* campo com erro;
+* login inválido;
+* botão carregando;
+* login realizado.
+
+Após login, direcionar para o dashboard correspondente ao perfil.
+
+## 7. DASHBOARD DO ALUNO
+
+Criar:
+
+Título: "Dashboard"
+
+Subtítulo: "Visão geral das suas reservas e empréstimos"
+
+Cards superiores:
+
+1. Próximas reservas
+2. Empréstimos ativos
+3. Próxima devolução
+4. Atalho "Nova reserva"
+
+Abaixo:
+
+"Suas próximas reservas"
+
+Tabela contendo:
+
+* Laboratório;
+* Data;
+* Horário;
+* Status;
+* Ação.
+
+Exemplo de dados:
+
+Lab. de Redes — 18/08 — 14h–16h — Confirmada
+
+Lab. de IA & Dados — 20/08 — 09h–11h — Pendente
+
+Criar também uma área de avisos quando houver empréstimo atrasado.
+
+## 8. LABORATÓRIOS
+
+Criar uma tela "Laboratórios".
+
+Exibir cards para:
+
+* Lab. de Redes
+* Lab. de Hardware
+* Lab. de IA & Dados
+* Lab. de Robótica
+
+Cada card deve mostrar:
+
+* Nome;
+* Localização;
+* Capacidade;
+* Status;
+* Breve descrição;
+* Equipamentos principais;
+* Botão "Ver detalhes";
+* Botão "Reservar".
+
+Criar uma tela de detalhes do laboratório com:
+
+* Nome;
+* Foto/ilustração discreta;
+* Localização;
+* Capacidade;
+* Horário de funcionamento;
+* Recursos disponíveis;
+* Equipamentos;
+* Próximos horários disponíveis;
+* Botão "Reservar laboratório".
+
+## 9. NOVA RESERVA
+
+Criar fluxo completo de reserva.
+
+Campos:
+
+* Laboratório;
+* Data;
+* Horário inicial;
+* Horário final.
+
+Adicionar calendário visual.
+
+Ao escolher horário, verificar conflito automaticamente.
+
+Criar estados:
+
+* horário disponível;
+* horário indisponível;
+* conflito de horário;
+* formulário incompleto;
+* reserva sendo processada;
+* reserva criada com sucesso.
+
+Antes de finalizar, mostrar um resumo:
+
+Laboratório
+Data
+Horário
+Solicitante
+
+Botão:
+
+"Confirmar reserva"
+
+Após confirmar, mostrar modal de sucesso informando que a reserva está pendente de confirmação por e-mail.
+
+## 10. MINHAS RESERVAS
+
+Criar tabela com:
+
+* Laboratório;
+* Data;
+* Horário;
+* Status;
+* Ações.
+
+Status:
+
+* Pendente;
+* Confirmada;
+* Cancelada;
+* Expirada.
+
+Para reserva confirmada:
+
+* "Ver QR Code"
+* "Cancelar"
+
+Para reserva pendente:
+
+* "Cancelar"
+
+Criar filtros:
+
+* Todas;
+* Próximas;
+* Confirmadas;
+* Pendentes;
+* Histórico.
+
+## 11. DETALHES DA RESERVA
+
+Criar uma tela detalhada contendo:
+
+* Laboratório;
+* Data;
+* Horário;
+* Solicitante;
+* Status;
+* Data da solicitação;
+* Informações importantes.
+
+Para reservas confirmadas, destacar o QR Code.
+
+Adicionar botão:
+
+"Ver QR Code"
+
+## 12. QR CODE
+
+Criar uma tela específica para o QR Code.
+
+Título:
+
+"QR Code da reserva"
+
+Exibir:
+
+* Laboratório;
+* Data;
+* Horário;
+* Status "Confirmada";
+* QR Code grande e centralizado;
+* Instrução para apresentar o código na entrada.
+
+Texto:
+
+"Apresente este código na entrada do laboratório. Válido apenas dentro do horário reservado."
+
+Adicionar botão:
+
+"Voltar"
+
+## 13. EQUIPAMENTOS DISPONÍVEIS
+
+Criar tela com tabela/listagem:
+
+* Equipamento;
+* Tombo;
+* Laboratório;
+* Estado;
+* Disponibilidade;
+* Ação.
+
+Exemplos:
+
+Osciloscópio DSO-200 — TB-0231 — Lab. de Hardware
+
+Kit Arduino Uno — TB-0455 — Lab. de Robótica
+
+Botão:
+
+"Solicitar empréstimo"
+
+Ao clicar, abrir modal contendo:
+
+* Equipamento;
+* Usuário;
+* Data de retirada;
+* Data prevista de devolução;
+* Termos;
+* Botão "Confirmar empréstimo".
+
+## 14. MEUS EMPRÉSTIMOS
+
+Criar tabela:
+
+* Equipamento;
+* Data do empréstimo;
+* Devolução prevista;
+* Status.
+
+Status:
+
+* Ativo;
+* Atrasado;
+* Devolvido.
+
+Quando estiver atrasado, destacar visualmente e mostrar aviso.
+
+## 15. PROFESSOR
+
+O professor possui todas as funcionalidades do aluno.
+
+Adicionar:
+
+"TODAS AS RESERVAS"
+
+Criar tabela global:
+
+* Aluno;
+* Laboratório;
+* Data;
+* Horário;
+* Status.
+
+Filtros:
+
+* Data;
+* Laboratório;
+* Status;
+* Aluno.
+
+Criar tela de detalhes da reserva.
+
+O professor não deve possuir permissões administrativas.
+
+## 16. ADMINISTRADOR — DASHBOARD
+
+Criar dashboard administrativo com aparência profissional.
+
+Cards:
+
+* Laboratórios ativos;
+* Reservas hoje;
+* Reservas pendentes;
+* Empréstimos ativos;
+* Empréstimos atrasados.
+
+Criar também:
+
+* gráfico simples de reservas por período;
+* distribuição de reservas por laboratório;
+* lista de atividades recentes.
+
+## 17. ADMIN — USUÁRIOS
+
+Criar tabela:
+
+* Nome;
+* E-mail;
+* Perfil;
+* Status;
+* Último acesso;
+* Ações.
+
+Perfis:
+
+* Aluno;
+* Professor;
+* Admin.
+
+Ações:
+
+* Editar;
+* Desativar.
+
+Botão:
+
+"+ Novo usuário"
+
+Criar modal de cadastro.
+
+## 18. ADMIN — LABORATÓRIOS
+
+Criar gerenciamento de laboratórios.
+
+Tabela:
+
+* Nome;
+* Localização;
+* Capacidade;
+* Status;
+* Equipamentos;
+* Ações.
+
+Ações:
+
+* Editar;
+* Desativar.
+
+Botão:
+
+"+ Novo laboratório"
+
+Criar formulário de cadastro.
+
+## 19. ADMIN — EQUIPAMENTOS
+
+Criar tabela:
+
+* Equipamento;
+* Tombo;
+* Laboratório;
+* Status;
+* Responsável;
+* Ações.
+
+Status:
+
+* Disponível;
+* Em uso;
+* Manutenção.
+
+Ações:
+
+* Editar;
+* Alterar status.
+
+Botão:
+
+"+ Novo equipamento"
+
+## 20. ADMIN — RESERVAS
+
+Criar tabela global de reservas.
+
+Filtros:
+
+* Status;
+* Laboratório;
+* Data;
+* Usuário.
+
+Exibir:
+
+* Usuário;
+* Laboratório;
+* Data;
+* Horário;
+* Status.
+
+## 21. ADMIN — EMPRÉSTIMOS
+
+Criar tabela:
+
+* Usuário;
+* Equipamento;
+* Data do empréstimo;
+* Devolução prevista;
+* Status.
+
+Ações:
+
+"Registrar devolução"
+
+Ao registrar devolução:
+
+* abrir modal;
+* confirmar data;
+* atualizar status para "Devolvido";
+* mostrar mensagem de sucesso.
+
+## 22. NOTIFICAÇÕES E FEEDBACK
+
+Criar sistema visual consistente de:
+
+* Toast de sucesso;
+* Toast de erro;
+* Alertas;
+* Confirmação;
+* Modal;
+* Loading;
+* Estado vazio.
+
+Exemplos:
+
+"Reserva realizada com sucesso."
+
+"Não foi possível realizar a reserva porque este horário já está ocupado."
+
+"Empréstimo registrado com sucesso."
+
+"Devolução registrada."
+
+## 23. ESTADOS VAZIOS
+
+Criar estados para:
+
+* Nenhuma reserva;
+* Nenhum empréstimo;
+* Nenhum equipamento disponível;
+* Nenhuma notificação;
+* Nenhum resultado de pesquisa.
+
+Nunca deixar uma tela simplesmente vazia.
+
+## 24. RESPONSIVIDADE
+
+Priorizar desktop, mas adaptar a interface para telas menores.
+
+No mobile:
+
+* sidebar vira menu lateral;
+* tabelas tornam-se cards/listas;
+* cards reorganizam-se verticalmente;
+* formulários ocupam largura total.
+
+## 25. INTERAÇÕES DO PROTÓTIPO
+
+O protótipo deve ser navegável.
+
+Criar links funcionais entre:
+
+Login → Dashboard
+
+Dashboard → Nova reserva
+
+Dashboard → Minhas reservas
+
+Laboratórios → Detalhes → Reservar
+
+Nova reserva → Confirmação
+
+Minhas reservas → Detalhes → QR Code
+
+Equipamentos → Solicitar empréstimo → Confirmação
+
+Professor → Todas as reservas
+
+Admin → Usuários
+
+Admin → Laboratórios
+
+Admin → Equipamentos
+
+Admin → Reservas
+
+Admin → Empréstimos
+
+Botão Sair → Login
+
+Utilizar transições discretas e profissionais.
+
+## 26. DADOS FICTÍCIOS
+
+Utilizar dados fictícios coerentes para demonstrar o sistema.
+
+Usuários:
+
+Ana Silva — [ana.silva@instituicao.edu.br](mailto:ana.silva@instituicao.edu.br) — Aluno
+
+Bruno Costa — [bruno.costa@instituicao.edu.br](mailto:bruno.costa@instituicao.edu.br) — Aluno
+
+Profa. Marta Nunes — [marta.nunes@instituicao.edu.br](mailto:marta.nunes@instituicao.edu.br) — Professor
+
+Coordenação TI — [coordenacao.ti@instituicao.edu.br](mailto:coordenacao.ti@instituicao.edu.br) — Admin
+
+Laboratórios:
+
+Lab. de Redes
+Lab. de Hardware
+Lab. de IA & Dados
+Lab. de Robótica
+
+Equipamentos:
+
+Osciloscópio DSO-200
+Kit Arduino Uno
+
+## 27. REGRAS IMPORTANTES
+
+Não criar backend real.
+
+Não utilizar dados reais.
+
+Não inventar funcionalidades fora do escopo principal.
+
+Não utilizar elementos de química como símbolo principal.
+
+Não exagerar nos efeitos visuais.
+
+Não utilizar excesso de gradientes.
+
+Não criar aparência de aplicativo genérico.
+
+Priorizar UX, clareza, consistência e facilidade de implementação posterior.
+
+O resultado deve parecer um produto acadêmico real, pronto para ser apresentado a professores e utilizado como especificação visual por desenvolvedores.
+
+Crie componentes reutilizáveis para:
+
+* Sidebar;
+* Header;
+* Botões;
+* Inputs;
+* Selects;
+* Cards;
+* Tabelas;
+* Badges de status;
+* Modais;
+* Toasts;
+* Avatares;
+* Cards de laboratório.
+
+Mantenha a mesma linguagem visual em TODAS as telas.
+
+Comece criando o protótipo completo e funcional com foco em alta fidelidade e consistência visual.

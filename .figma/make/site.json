@@ -1,0 +1,10 @@
+{
+  "description": "Creates project screens from provided information, enabling users to visualize and organize their project designs efficiently.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
