@@ -1,23 +1,20 @@
 import { useState } from 'react';
 import { useApp } from '../context';
-import { EquipmentBadge, Btn, Modal, Input, EmptyState } from '../components/ui';
-import { getLabById } from '../data';
-import type { Loan } from '../types';
+import { AlertBanner, EquipmentBadge, Btn, Modal, Input, EmptyState } from '../components/ui';
+import { ApiError } from '../api';
+import { formatDate, todayISO, tomorrowISO } from '../utils';
 
 export default function Equipment() {
-  const { state, currentUser, addLoan, showToast } = useApp();
+  const { state, currentUser, addLoan, reload, handleError } = useApp();
   const [search, setSearch] = useState('');
   const [loanTarget, setLoanTarget] = useState<string | null>(null);
   const [returnDate, setReturnDate] = useState('');
   const [agreed, setAgreed] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [successModal, setSuccessModal] = useState(false);
+  const [loanError, setLoanError] = useState('');
 
-  const available = state.equipment.filter(e =>
-    e.status === 'available' &&
-    (e.name.toLowerCase().includes(search.toLowerCase()) ||
-     e.tombstone.toLowerCase().includes(search.toLowerCase()))
-  );
+  const canRequest = currentUser?.role !== 'admin';
 
   const allFiltered = state.equipment.filter(e =>
     e.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -25,27 +22,30 @@ export default function Equipment() {
   );
 
   const targetEquipment = state.equipment.find(e => e.id === loanTarget);
-  const targetLab = targetEquipment ? getLabById(state.labs, targetEquipment.labId) : null;
-  const today = new Date().toISOString().split('T')[0];
+  const today = todayISO();
 
   async function handleConfirmLoan() {
     if (!loanTarget || !returnDate || !agreed) return;
     setProcessing(true);
-    await new Promise(r => setTimeout(r, 1000));
-    const loan: Loan = {
-      id: `l${Date.now()}`,
-      userId: currentUser!.id,
-      equipmentId: loanTarget,
-      loanDate: today,
-      expectedReturn: returnDate,
-      status: 'active',
-    };
-    addLoan(loan);
-    setProcessing(false);
-    setLoanTarget(null);
-    setReturnDate('');
-    setAgreed(false);
-    setSuccessModal(true);
+    setLoanError('');
+    try {
+      await addLoan({ equipmentId: loanTarget, expectedReturn: returnDate });
+      setLoanTarget(null);
+      setReturnDate('');
+      setAgreed(false);
+      setSuccessModal(true);
+    } catch (error) {
+      if (error instanceof ApiError && error.code === 'ERR_EQUIP_001') {
+        setLoanError(error.message);
+        reload(['equipment']).catch(handleError);
+      } else if (error instanceof ApiError && error.status === 422) {
+        setLoanError(Object.values(error.fields)[0] ?? error.message);
+      } else {
+        handleError(error);
+      }
+    } finally {
+      setProcessing(false);
+    }
   }
 
   return (
@@ -82,12 +82,11 @@ export default function Equipment() {
             </thead>
             <tbody className="divide-y divide-border">
               {allFiltered.map(e => {
-                const lab = getLabById(state.labs, e.labId);
                 return (
                   <tr key={e.id} className="hover:bg-bg/40 transition-colors">
                     <td className="px-6 py-4 text-sm font-500 text-text">{e.name}</td>
                     <td className="px-6 py-4 text-sm font-500 text-text-secondary font-mono">{e.tombstone}</td>
-                    <td className="px-6 py-4 text-sm text-text-secondary">{lab?.name}</td>
+                    <td className="px-6 py-4 text-sm text-text-secondary">{e.labName}</td>
                     <td className="px-6 py-4"><EquipmentBadge status={e.status} /></td>
                     <td className="px-6 py-4 text-sm text-text-secondary">
                       {e.status === 'available' ? (
@@ -99,12 +98,12 @@ export default function Equipment() {
                       )}
                     </td>
                     <td className="px-6 py-4">
-                      {e.status === 'available' ? (
-                        <Btn size="sm" onClick={() => { setLoanTarget(e.id); setReturnDate(''); setAgreed(false); }}>
+                      {e.status === 'available' && canRequest ? (
+                        <Btn size="sm" onClick={() => { setLoanTarget(e.id); setReturnDate(''); setAgreed(false); setLoanError(''); }}>
                           Solicitar empréstimo
                         </Btn>
                       ) : (
-                        <span className="text-xs text-text-secondary">Indisponível</span>
+                        <span className="text-xs text-text-secondary">{e.status === 'available' ? '—' : 'Indisponível'}</span>
                       )}
                     </td>
                   </tr>
@@ -122,16 +121,16 @@ export default function Equipment() {
             <div className="bg-bg rounded-xl p-4 space-y-2 text-sm">
               <div className="flex justify-between"><span className="text-text-secondary">Equipamento</span><span className="font-600 text-text">{targetEquipment.name}</span></div>
               <div className="flex justify-between"><span className="text-text-secondary">Tombo</span><span className="font-600 text-text font-mono">{targetEquipment.tombstone}</span></div>
-              <div className="flex justify-between"><span className="text-text-secondary">Laboratório</span><span className="font-600 text-text">{targetLab?.name}</span></div>
+              <div className="flex justify-between"><span className="text-text-secondary">Laboratório</span><span className="font-600 text-text">{targetEquipment.labName}</span></div>
               <div className="flex justify-between"><span className="text-text-secondary">Solicitante</span><span className="font-600 text-text">{currentUser?.name}</span></div>
-              <div className="flex justify-between"><span className="text-text-secondary">Data de retirada</span><span className="font-600 text-text">{today.split('-').reverse().join('/')}</span></div>
+              <div className="flex justify-between"><span className="text-text-secondary">Data de retirada</span><span className="font-600 text-text">{formatDate(today)}</span></div>
             </div>
 
             <Input
               label="Data prevista de devolução"
               type="date"
               value={returnDate}
-              min={today}
+              min={tomorrowISO()}
               onChange={e => setReturnDate(e.target.value)}
             />
 
@@ -154,6 +153,8 @@ export default function Equipment() {
               />
               <span className="text-sm text-text">Li e concordo com os termos do empréstimo.</span>
             </label>
+
+            {loanError && <AlertBanner type="error" message={loanError} />}
 
             <Btn
               className="w-full justify-center"

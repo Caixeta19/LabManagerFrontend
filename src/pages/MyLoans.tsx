@@ -1,6 +1,6 @@
 import { useApp } from '../context';
 import { LoanBadge, Btn, AlertBanner, EmptyState } from '../components/ui';
-import { formatDate, getEquipmentById, getLabById } from '../data';
+import { formatDate, getEquipmentById } from '../utils';
 
 export default function MyLoans() {
   const { state, currentUser, navigate } = useApp();
@@ -38,14 +38,13 @@ export default function MyLoans() {
             <tbody className="divide-y divide-border">
               {userLoans.map(l => {
                 const eq = getEquipmentById(state.equipment, l.equipmentId);
-                const lab = eq ? getLabById(state.labs, eq.labId) : null;
                 return (
                   <tr key={l.id} className={`transition-colors hover:bg-bg/40 ${l.status === 'overdue' ? 'bg-danger/5' : ''}`}>
                     <td className="px-6 py-4">
                       <div className="text-sm font-500 text-text">{eq?.name}</div>
                       <div className="text-xs text-text-secondary font-mono">{eq?.tombstone}</div>
                     </td>
-                    <td className="px-6 py-4 text-sm text-text-secondary">{lab?.name}</td>
+                    <td className="px-6 py-4 text-sm text-text-secondary">{eq?.labName}</td>
                     <td className="px-6 py-4 text-sm text-text-secondary">{formatDate(l.loanDate)}</td>
                     <td className="px-6 py-4">
                       <span className={`text-sm font-600 ${l.status === 'overdue' ? 'text-danger' : 'text-text-secondary'}`}>
