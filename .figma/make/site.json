@@ -1,5 +1,7 @@
 {
-  "description": "Creates project screens from provided information, enabling users to visualize and organize their project designs efficiently.",
+  "title": "LabManager",
+  "language": "pt-BR",
+  "description": "Sistema de gestão de laboratórios: reservas, check-in por QR Code e empréstimo de equipamentos.",
   "robots": {
     "index": false
   },
