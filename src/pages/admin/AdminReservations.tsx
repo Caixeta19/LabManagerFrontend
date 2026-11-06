@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useApp } from '../../context';
 import { ReservationBadge, Btn, EmptyState } from '../../components/ui';
-import { formatDate, getLabById, getUserById } from '../../data';
+import { formatDate, getLabById, getUserById } from '../../utils';
 
 export default function AdminReservations() {
   const { state, navigate } = useApp();

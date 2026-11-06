@@ -1,6 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useApp } from '../context';
 import { Btn, EmptyState } from '../components/ui';
+import { labsApi } from '../api';
+import type { OccupiedSlot } from '../api/labs';
+import { formatDate } from '../utils';
 import type { Lab } from '../types';
 
 function LabStatusDot({ status }: { status: Lab['status'] }) {
@@ -38,8 +41,9 @@ function LabIllustration({ labId }: { labId: string }) {
 }
 
 export default function Labs() {
-  const { state, navigate } = useApp();
+  const { state, currentUser, navigate } = useApp();
   const [search, setSearch] = useState('');
+  const canReserve = currentUser?.role !== 'admin';
 
   const filtered = state.labs.filter(l =>
     l.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -99,7 +103,7 @@ export default function Labs() {
                       <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" strokeLinecap="round" />
                       </svg>
-                      {lab.hours}
+                      {lab.hours || 'Horário não informado'}
                     </span>
                   </div>
 
@@ -119,7 +123,7 @@ export default function Labs() {
                     <Btn variant="secondary" size="sm" className="flex-1" onClick={() => navigate('lab-detail', { id: lab.id })}>
                       Ver detalhes
                     </Btn>
-                    {lab.status === 'active' && (
+                    {lab.status === 'active' && canReserve && (
                       <Btn variant="primary" size="sm" className="flex-1" onClick={() => navigate('new-reservation', { labId: lab.id })}>
                         Reservar
                       </Btn>
@@ -138,17 +142,26 @@ export default function Labs() {
 // ─── Lab Detail ───────────────────────────────────────────────────────────────
 
 export function LabDetail() {
-  const { state, pageParams, navigate } = useApp();
+  const { state, currentUser, pageParams, navigate } = useApp();
   const lab = state.labs.find(l => l.id === pageParams.id);
+  const [slots, setSlots] = useState<OccupiedSlot[] | null>(null);
+  const [slotsFailed, setSlotsFailed] = useState(false);
+
+  const labId = lab?.id;
+  useEffect(() => {
+    if (!labId) return;
+    let cancelled = false;
+    setSlots(null);
+    setSlotsFailed(false);
+    labsApi.occupiedSlots(labId)
+      .then(result => { if (!cancelled) setSlots(result); })
+      .catch(() => { if (!cancelled) setSlotsFailed(true); });
+    return () => { cancelled = true; };
+  }, [labId]);
+
   if (!lab) return <div className="p-8 text-text-secondary">Laboratório não encontrado.</div>;
 
   const labEquipment = state.equipment.filter(e => lab.equipmentIds.includes(e.id));
-  const nextSlots = [
-    { date: 'Hoje', time: '14h–16h', available: true },
-    { date: 'Amanhã', time: '08h–10h', available: true },
-    { date: 'Amanhã', time: '14h–18h', available: false },
-    { date: '21/08', time: '09h–11h', available: true },
-  ];
 
   return (
     <div className="p-8 max-w-4xl">
@@ -177,11 +190,15 @@ export function LabDetail() {
             </div>
             <div>
               <h3 className="text-sm font-600 text-text-secondary uppercase tracking-wide mb-2">Recursos disponíveis</h3>
-              <div className="flex flex-wrap gap-2">
-                {lab.resources.map(r => (
-                  <span key={r} className="text-xs px-3 py-1.5 bg-bg border border-border rounded-lg text-text font-500">{r}</span>
-                ))}
-              </div>
+              {lab.resources.length === 0 ? (
+                <p className="text-sm text-text-secondary">Nenhum recurso informado.</p>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {lab.resources.map(r => (
+                    <span key={r} className="text-xs px-3 py-1.5 bg-bg border border-border rounded-lg text-text font-500">{r}</span>
+                  ))}
+                </div>
+              )}
             </div>
             {labEquipment.length > 0 && (
               <div>
@@ -200,33 +217,37 @@ export function LabDetail() {
           <div className="space-y-4">
             <div className="bg-bg rounded-xl p-4 space-y-3">
               <div><div className="text-xs text-text-secondary">Capacidade</div><div className="text-sm font-600 text-text mt-0.5">{lab.capacity} pessoas</div></div>
-              <div><div className="text-xs text-text-secondary">Funcionamento</div><div className="text-sm font-600 text-text mt-0.5">{lab.hours}</div></div>
-              <div><div className="text-xs text-text-secondary">Status</div>
-                <span className="inline-flex items-center gap-1.5 text-xs font-600 mt-0.5" style={{ color: '#2E9E5B' }}>
-                  <span className="w-2 h-2 rounded-full bg-success" />Ativo
-                </span>
+              <div><div className="text-xs text-text-secondary">Funcionamento</div><div className="text-sm font-600 text-text mt-0.5">{lab.hours || 'Não informado'}</div></div>
+              <div><div className="text-xs text-text-secondary mb-0.5">Status</div>
+                <LabStatusDot status={lab.status} />
               </div>
             </div>
             <div>
               <h3 className="text-sm font-600 text-text-secondary uppercase tracking-wide mb-2">Próximos horários</h3>
-              <div className="space-y-2">
-                {nextSlots.map((s, i) => (
-                  <div key={i} className="flex items-center justify-between text-xs py-2 border-b border-border last:border-0">
-                    <div>
-                      <div className="font-600 text-text">{s.date}</div>
-                      <div className="text-text-secondary">{s.time}</div>
+              {slotsFailed ? (
+                <p className="text-xs text-text-secondary">Não foi possível carregar os horários.</p>
+              ) : !slots ? (
+                <p className="text-xs text-text-secondary">Carregando...</p>
+              ) : slots.length === 0 ? (
+                <p className="text-xs text-text-secondary">Nenhuma reserva nos próximos 14 dias.</p>
+              ) : (
+                <div className="space-y-2">
+                  {slots.slice(0, 6).map(s => (
+                    <div key={`${s.date}-${s.startTime}`} className="flex items-center justify-between text-xs py-2 border-b border-border last:border-0">
+                      <div>
+                        <div className="font-600 text-text">{formatDate(s.date)}</div>
+                        <div className="text-text-secondary">{s.startTime}–{s.endTime}</div>
+                      </div>
+                      <span className="font-600" style={{ color: '#C4433A' }}>Ocupado</span>
                     </div>
-                    <span className="font-600" style={{ color: s.available ? '#2E9E5B' : '#C4433A' }}>
-                      {s.available ? 'Disponível' : 'Ocupado'}
-                    </span>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
         <div className="px-6 pb-6">
-          {lab.status === 'active' && (
+          {lab.status === 'active' && currentUser?.role !== 'admin' && (
             <Btn onClick={() => navigate('new-reservation', { labId: lab.id })} className="w-full justify-center py-3">
               Reservar laboratório
             </Btn>

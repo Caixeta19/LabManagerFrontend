@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useApp } from '../context';
 import { ReservationBadge, Btn, EmptyState } from '../components/ui';
-import { formatDate, getLabById, getUserById } from '../data';
+import { formatDate, getLabById, getUserById } from '../utils';
 
 export default function AllReservations() {
   const { state, navigate } = useApp();
@@ -111,7 +111,7 @@ export default function AllReservations() {
                         <div className="text-sm font-500 text-text">{user?.name}</div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-sm text-text-secondary">{lab?.name}</td>
+                    <td className="px-6 py-4 text-sm text-text-secondary">{lab?.name ?? r.labName}</td>
                     <td className="px-6 py-4 text-sm text-text-secondary">{formatDate(r.date)}</td>
                     <td className="px-6 py-4 text-sm text-text-secondary">{r.startTime}–{r.endTime}</td>
                     <td className="px-6 py-4"><ReservationBadge status={r.status} /></td>

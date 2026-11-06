@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useApp } from '../../context';
 import { LoanBadge, Btn, Modal, EmptyState } from '../../components/ui';
-import { formatDate, getEquipmentById, getUserById, getLabById } from '../../data';
+import { formatDate, getEquipmentById, getUserById } from '../../utils';
 
 export default function AdminLoans() {
-  const { state, returnLoan, showToast } = useApp();
+  const { state, returnLoan, showToast, handleError } = useApp();
   const [returnTarget, setReturnTarget] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
 
@@ -15,11 +15,15 @@ export default function AdminLoans() {
   async function handleReturn() {
     if (!returnTarget) return;
     setProcessing(true);
-    await new Promise(r => setTimeout(r, 800));
-    returnLoan(returnTarget);
-    setProcessing(false);
-    setReturnTarget(null);
-    showToast('Devolução registrada com sucesso.');
+    try {
+      await returnLoan(returnTarget);
+      setReturnTarget(null);
+      showToast('Devolução registrada com sucesso.');
+    } catch (error) {
+      handleError(error);
+    } finally {
+      setProcessing(false);
+    }
   }
 
   const active = state.loans.filter(l => l.status === 'active' || l.status === 'overdue');
@@ -49,7 +53,6 @@ export default function AdminLoans() {
                 {active.map(l => {
                   const eq = getEquipmentById(state.equipment, l.equipmentId);
                   const user = getUserById(state.users, l.userId);
-                  const lab = eq ? getLabById(state.labs, eq.labId) : null;
                   return (
                     <tr key={l.id} className={`hover:bg-bg/40 transition-colors ${l.status === 'overdue' ? 'bg-danger/5' : ''}`}>
                       <td className="px-6 py-4">
@@ -60,7 +63,7 @@ export default function AdminLoans() {
                       </td>
                       <td className="px-6 py-4">
                         <div className="text-sm font-500 text-text">{eq?.name}</div>
-                        <div className="text-xs text-text-secondary font-mono">{eq?.tombstone} · {lab?.name}</div>
+                        <div className="text-xs text-text-secondary font-mono">{eq?.tombstone} · {eq?.labName}</div>
                       </td>
                       <td className="px-6 py-4 text-sm text-text-secondary">{formatDate(l.loanDate)}</td>
                       <td className="px-6 py-4">

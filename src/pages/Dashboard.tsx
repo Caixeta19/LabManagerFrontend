@@ -6,7 +6,13 @@ import {
   AlertBanner,
   EmptyState,
 } from "../components/ui"
-import { formatDate, getLabById, getEquipmentById } from "../data"
+import {
+  currentWeekdays,
+  formatDate,
+  getLabById,
+  getEquipmentById,
+  todayISO,
+} from "../utils"
 
 type IconProps = {
   size?: number
@@ -174,8 +180,14 @@ function ReservationChart({
   reservations: ReturnType<typeof useApp>["state"]["reservations"]
 }) {
   const days = ["Seg", "Ter", "Qua", "Qui", "Sex"]
-  const counts = days.map((_, i) => Math.floor(Math.random() * 8) + 2)
-  const max = Math.max(...counts)
+  const counts = currentWeekdays().map(
+    (date) =>
+      reservations.filter(
+        (r) =>
+          r.date === date && r.status !== "cancelled" && r.status !== "expired",
+      ).length,
+  )
+  const max = Math.max(...counts, 1)
 
   return (
     <div className="bg-white rounded-2xl border border-border p-6">
@@ -185,17 +197,23 @@ function ReservationChart({
 
       <div className="flex items-end gap-3 h-32">
         {days.map((day, i) => (
-          <div key={day} className="flex-1 flex flex-col items-center gap-2">
+          <div
+            key={day}
+            className="flex-1 h-full flex flex-col items-center justify-end gap-2"
+          >
             <div
               className="w-full rounded-t-lg transition-all"
               style={{
                 height: `${(counts[i] / max) * 100}%`,
+                minHeight: counts[i] > 0 ? 4 : 0,
                 backgroundColor: "#3FA796",
                 opacity: 0.85,
               }}
             />
 
-            <span className="text-xs text-text-secondary font-500">{day}</span>
+            <span className="text-xs text-text-secondary font-500">
+              {day} ({counts[i]})
+            </span>
           </div>
         ))}
       </div>
@@ -218,9 +236,19 @@ export default function Dashboard() {
     ? state.loans
     : state.loans.filter((l) => l.userId === currentUser.id)
 
-  const upcoming = userReservations
-    .filter((r) => r.status === "confirmed" || r.status === "pending")
-    .slice(0, 5)
+  const todayStr = todayISO()
+
+  const allUpcoming = userReservations
+    .filter(
+      (r) =>
+        (r.status === "confirmed" || r.status === "pending") &&
+        r.date >= todayStr,
+    )
+    .sort((a, b) =>
+      `${a.date}${a.startTime}`.localeCompare(`${b.date}${b.startTime}`),
+    )
+
+  const upcoming = allUpcoming.slice(0, 5)
 
   const activeLoans = userLoans.filter(
     (l) => l.status === "active" || l.status === "overdue",
@@ -238,10 +266,11 @@ export default function Dashboard() {
       (r) => r.status === "pending",
     )
 
-    const todayStr = new Date().toISOString().split("T")[0]
-
     const todayReservations = state.reservations.filter(
-      (r) => r.date === todayStr,
+      (r) =>
+        r.date === todayStr &&
+        r.status !== "cancelled" &&
+        r.status !== "expired",
     )
 
     const activeLabs = state.labs.filter((l) => l.status === "active")
@@ -337,9 +366,15 @@ export default function Dashboard() {
           </h3>
 
           <div className="space-y-3">
-            {state.reservations
-              .slice(-5)
-              .reverse()
+            {state.reservations.length === 0 && (
+              <p className="text-sm text-text-secondary">
+                Nenhuma reserva registrada.
+              </p>
+            )}
+
+            {[...state.reservations]
+              .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+              .slice(0, 5)
               .map((r) => {
                 const user = state.users.find((u) => u.id === r.userId)
 
@@ -357,7 +392,7 @@ export default function Dashboard() {
 
                       <div>
                         <div className="text-sm font-500 text-text">
-                          {user?.name} — {lab?.name}
+                          {r.userName} — {lab?.name ?? r.labName}
                         </div>
 
                         <div className="text-xs text-text-secondary">
@@ -390,7 +425,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           label="Próximas reservas"
-          value={upcoming.length}
+          value={allUpcoming.length}
           sub={
             upcoming.length > 0
               ? `Próxima: ${formatDate(upcoming[0]?.date)}`
@@ -508,7 +543,7 @@ export default function Dashboard() {
                 return (
                   <tr key={r.id} className="hover:bg-bg/50 transition-colors">
                     <td className="px-6 py-4 text-sm font-500 text-text">
-                      {lab?.name}
+                      {lab?.name ?? r.labName}
                     </td>
 
                     <td className="px-6 py-4 text-sm text-text-secondary">

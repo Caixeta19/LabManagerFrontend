@@ -1,17 +1,20 @@
 import { AppProvider, useApp } from "./context"
-import { ToastContainer } from "./components/ui"
+import { ErrorState, LoadingState, ToastContainer } from "./components/ui"
 
 import Sidebar from "./components/Sidebar"
 import Header from "./components/Header"
 
 import Login from "./pages/Login"
 import Register from "./pages/Register"
+import ForgotPassword from "./pages/ForgotPassword"
+import ResetPassword from "./pages/ResetPassword"
 
 import Dashboard from "./pages/Dashboard"
 import Labs, { LabDetail } from "./pages/Labs"
 import NewReservation from "./pages/NewReservation"
 import MyReservations, { ReservationDetail } from "./pages/MyReservations"
 
+import CheckIn from "./pages/CheckIn"
 import Equipment from "./pages/Equipment"
 import MyLoans from "./pages/MyLoans"
 import AllReservations from "./pages/AllReservations"
@@ -44,6 +47,9 @@ function PageContent() {
     case "reservation-detail":
       return <ReservationDetail />
 
+    case "check-in":
+      return <CheckIn />
+
     case "equipment":
       return <Equipment />
 
@@ -74,16 +80,41 @@ function PageContent() {
 }
 
 function AppShell() {
-  const { page, currentUser, toasts } = useApp()
+  const { page, currentUser, toasts, booting, dataStatus, reload } = useApp()
+
+  if (booting) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-bg">
+        <LoadingState label="Restaurando sua sessão..." />
+      </div>
+    )
+  }
+
+  /* O link do e-mail abre esta tela mesmo com outra sessão aberta no navegador. */
+  if (page === "reset-password") {
+    return (
+      <>
+        <ResetPassword />
+
+        <ToastContainer toasts={toasts} />
+      </>
+    )
+  }
 
   /*
    * Login e Cadastro ficam fora do sistema
    * principal enquanto não existe usuário logado.
    */
-  if ((page === "login" || page === "register") && !currentUser) {
+  if (!currentUser) {
     return (
       <>
-        {page === "register" ? <Register /> : <Login />}
+        {page === "register" ? (
+          <Register />
+        ) : page === "forgot-password" ? (
+          <ForgotPassword />
+        ) : (
+          <Login />
+        )}
 
         <ToastContainer toasts={toasts} />
       </>
@@ -101,7 +132,16 @@ function AppShell() {
         <Header />
 
         <main className="flex-1 overflow-y-auto">
-          <PageContent />
+          {dataStatus === "loading" && <LoadingState />}
+
+          {dataStatus === "error" && (
+            <ErrorState
+              message="Não foi possível carregar os dados do sistema."
+              onRetry={() => reload()}
+            />
+          )}
+
+          {dataStatus === "ready" && <PageContent />}
         </main>
       </div>
 

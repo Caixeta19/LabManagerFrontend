@@ -86,7 +86,7 @@ interface BtnProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   loading?: boolean;
 }
 
-export function Btn({ variant = 'primary', size = 'md', loading, children, className = '', ...rest }: BtnProps) {
+export function Btn({ variant = 'primary', size = 'md', loading, disabled, children, className = '', ...rest }: BtnProps) {
   const base = 'inline-flex items-center justify-center font-600 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:opacity-50 disabled:pointer-events-none';
   const sizes = { sm: 'px-3 py-1.5 text-sm gap-1.5', md: 'px-4 py-2 text-sm gap-2' };
   const variants = {
@@ -96,7 +96,7 @@ export function Btn({ variant = 'primary', size = 'md', loading, children, class
     ghost: 'text-text-secondary hover:bg-border focus:ring-border',
   };
   return (
-    <button className={`${base} ${sizes[size]} ${variants[variant]} ${className}`} disabled={loading || rest.disabled} {...rest}>
+    <button className={`${base} ${sizes[size]} ${variants[variant]} ${className}`} disabled={loading || disabled} {...rest}>
       {loading && (
         <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
@@ -222,6 +222,34 @@ export function EmptyState({ title, description, action }: { title: string; desc
       <h3 className="text-base font-700 text-text mb-1">{title}</h3>
       {description && <p className="text-sm text-text-secondary mb-4">{description}</p>}
       {action}
+    </div>
+  );
+}
+
+// ─── Loading / Error State ────────────────────────────────────────────────────
+
+export function LoadingState({ label = 'Carregando...' }: { label?: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-16 px-4 text-center" role="status">
+      <svg className="animate-spin h-8 w-8 text-accent mb-3" viewBox="0 0 24 24" fill="none">
+        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+      </svg>
+      <p className="text-sm text-text-secondary">{label}</p>
+    </div>
+  );
+}
+
+export function ErrorState({ message, onRetry }: { message: string; onRetry?: () => void }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-16 px-4 text-center" role="alert">
+      <div className="w-16 h-16 rounded-2xl bg-danger/10 flex items-center justify-center mb-4">
+        <svg className="w-8 h-8 text-danger" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <path strokeLinecap="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+        </svg>
+      </div>
+      <p className="text-sm text-text-secondary mb-4">{message}</p>
+      {onRetry && <Btn variant="secondary" onClick={onRetry}>Tentar novamente</Btn>}
     </div>
   );
 }
