@@ -12,6 +12,10 @@ Consome a API do repositório `LabManagerBackend` (Spring Boot).
 
 `npm run build` gera o `dist/`. Ele não checa tipos: rode também `npx tsc --noEmit`.
 
+### Com Docker
+
+O `docker-compose.yaml` do `LabManagerBackend` builda este repositório (`Dockerfile` + `nginx.conf`) e serve o front em http://localhost:5173. O `VITE_API_URL` entra no build como argumento: mudou o endereço da API ou o código, rode `docker compose up --build -d front` lá.
+
 ## Estrutura
 
 - `src/api/client.ts`: único ponto que chama `fetch`. Coloca o token e transforma o corpo de erro em `ApiError`.
