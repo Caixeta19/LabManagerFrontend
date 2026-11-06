@@ -1,7 +1,12 @@
 import { useState } from 'react';
 import { useApp } from '../../context';
 import { Btn, Modal, Input, Select, EmptyState } from '../../components/ui';
+import { ApiError } from '../../api';
 import type { Lab } from '../../types';
+
+function splitResources(text: string) {
+  return text.split(/[,\n]/).map(r => r.trim()).filter(Boolean);
+}
 
 function LabStatusBadge({ status }: { status: Lab['status'] }) {
   const cfg = {
@@ -13,43 +18,65 @@ function LabStatusBadge({ status }: { status: Lab['status'] }) {
 }
 
 export default function AdminLabs() {
-  const { state, addLab, updateLab, showToast } = useApp();
+  const { state, addLab, updateLab, showToast, handleError } = useApp();
   const [modalOpen, setModalOpen] = useState(false);
   const [editLab, setEditLab] = useState<Lab | null>(null);
-  const [form, setForm] = useState({ name: '', location: '', capacity: 20, status: 'active' as Lab['status'], hours: '' });
+  const [form, setForm] = useState({ name: '', location: '', capacity: 20, status: 'active' as Lab['status'], hours: '', description: '', resources: '' });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [saving, setSaving] = useState(false);
 
   function openCreate() {
     setEditLab(null);
-    setForm({ name: '', location: '', capacity: 20, status: 'active', hours: 'Seg–Sex: 08h–20h' });
+    setForm({ name: '', location: '', capacity: 20, status: 'active', hours: 'Seg–Sex: 08h–20h', description: '', resources: '' });
+    setErrors({});
     setModalOpen(true);
   }
 
   function openEdit(l: Lab) {
     setEditLab(l);
-    setForm({ name: l.name, location: l.location, capacity: l.capacity, status: l.status, hours: l.hours });
+    setForm({ name: l.name, location: l.location, capacity: l.capacity, status: l.status, hours: l.hours, description: l.description, resources: l.resources.join(', ') });
+    setErrors({});
     setModalOpen(true);
   }
 
-  function handleSave() {
-    if (!form.name || !form.location) return;
-    if (editLab) {
-      updateLab({ ...editLab, ...form });
-      showToast('Laboratório atualizado.');
-    } else {
-      addLab({
-        id: `lab${Date.now()}`,
-        name: form.name,
-        location: form.location,
-        capacity: form.capacity,
-        status: form.status,
-        hours: form.hours,
-        description: '',
-        resources: [],
-        equipmentIds: [],
-      });
-      showToast('Laboratório criado.');
+  async function handleSave() {
+    const missing: Record<string, string> = {};
+    if (!form.name.trim()) missing.name = 'Informe o nome.';
+    if (!form.location.trim()) missing.localization = 'Informe a localização.';
+    if (form.capacity <= 0) missing.capacity = 'A capacidade deve ser maior que zero.';
+    setErrors(missing);
+    if (Object.keys(missing).length) return;
+
+    const input = { ...form, resources: splitResources(form.resources) };
+
+    setSaving(true);
+    try {
+      if (editLab) {
+        await updateLab(editLab.id, input);
+        showToast('Laboratório atualizado.');
+      } else {
+        await addLab(input);
+        showToast('Laboratório criado.');
+      }
+      setModalOpen(false);
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 422) {
+        setErrors(error.fields);
+      } else {
+        handleError(error);
+      }
+    } finally {
+      setSaving(false);
     }
-    setModalOpen(false);
+  }
+
+  async function toggleStatus(l: Lab) {
+    try {
+      await updateLab(l.id, { ...l, status: l.status === 'active' ? 'inactive' : 'active' });
+      showToast('Status atualizado.', 'info');
+    } catch (error) {
+      handleError(error);
+    }
   }
 
   return (
@@ -86,7 +113,7 @@ export default function AdminLabs() {
                     <td className="px-6 py-4">
                       <div className="flex gap-2">
                         <Btn variant="ghost" size="sm" onClick={() => openEdit(l)}>Editar</Btn>
-                        <Btn variant="ghost" size="sm" onClick={() => { updateLab({ ...l, status: l.status === 'active' ? 'inactive' : 'active' }); showToast('Status atualizado.', 'info'); }}>
+                        <Btn variant="ghost" size="sm" onClick={() => toggleStatus(l)}>
                           {l.status === 'active' ? 'Desativar' : 'Ativar'}
                         </Btn>
                       </div>
@@ -101,10 +128,20 @@ export default function AdminLabs() {
 
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editLab ? 'Editar laboratório' : 'Novo laboratório'}>
         <div className="space-y-4">
-          <Input label="Nome" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Ex: Lab. de Redes" />
-          <Input label="Localização" value={form.location} onChange={e => setForm(f => ({ ...f, location: e.target.value }))} placeholder="Ex: Bloco A — Sala 101" />
-          <Input label="Capacidade (pessoas)" type="number" value={form.capacity} onChange={e => setForm(f => ({ ...f, capacity: Number(e.target.value) }))} />
-          <Input label="Horário de funcionamento" value={form.hours} onChange={e => setForm(f => ({ ...f, hours: e.target.value }))} placeholder="Ex: Seg–Sex: 08h–20h" />
+          <Input label="Nome" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Ex: Lab. de Redes" error={errors.name} />
+          <Input label="Localização" value={form.location} onChange={e => setForm(f => ({ ...f, location: e.target.value }))} placeholder="Ex: Bloco A — Sala 101" error={errors.localization} />
+          <Input label="Capacidade (pessoas)" type="number" value={form.capacity} onChange={e => setForm(f => ({ ...f, capacity: Number(e.target.value) }))} error={errors.capacity} />
+          <Input label="Horário de funcionamento" value={form.hours} onChange={e => setForm(f => ({ ...f, hours: e.target.value }))} placeholder="Ex: Seg–Sex: 08h–20h" error={errors.openingHours} />
+          <Input label="Recursos" value={form.resources} onChange={e => setForm(f => ({ ...f, resources: e.target.value }))} placeholder="Separados por vírgula. Ex: Projetor, Quadro branco" />
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-600 text-text">Descrição</label>
+            <textarea
+              rows={3}
+              value={form.description}
+              onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+              className="w-full px-3 py-2.5 text-sm bg-white border border-border rounded-lg text-text placeholder-text-secondary resize-none transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+            />
+          </div>
           <Select label="Status" value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value as Lab['status'] }))}>
             <option value="active">Ativo</option>
             <option value="inactive">Inativo</option>
@@ -112,7 +149,7 @@ export default function AdminLabs() {
           </Select>
           <div className="flex gap-3 pt-2">
             <Btn variant="secondary" className="flex-1 justify-center" onClick={() => setModalOpen(false)}>Cancelar</Btn>
-            <Btn className="flex-1 justify-center" onClick={handleSave}>Salvar</Btn>
+            <Btn className="flex-1 justify-center" loading={saving} onClick={handleSave}>Salvar</Btn>
           </div>
         </div>
       </Modal>
