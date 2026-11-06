@@ -226,6 +226,34 @@ export function EmptyState({ title, description, action }: { title: string; desc
   );
 }
 
+// ─── Loading / Error State ────────────────────────────────────────────────────
+
+export function LoadingState({ label = 'Carregando...' }: { label?: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-16 px-4 text-center" role="status">
+      <svg className="animate-spin h-8 w-8 text-accent mb-3" viewBox="0 0 24 24" fill="none">
+        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+      </svg>
+      <p className="text-sm text-text-secondary">{label}</p>
+    </div>
+  );
+}
+
+export function ErrorState({ message, onRetry }: { message: string; onRetry?: () => void }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-16 px-4 text-center" role="alert">
+      <div className="w-16 h-16 rounded-2xl bg-danger/10 flex items-center justify-center mb-4">
+        <svg className="w-8 h-8 text-danger" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <path strokeLinecap="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+        </svg>
+      </div>
+      <p className="text-sm text-text-secondary mb-4">{message}</p>
+      {onRetry && <Btn variant="secondary" onClick={onRetry}>Tentar novamente</Btn>}
+    </div>
+  );
+}
+
 // ─── Avatar ───────────────────────────────────────────────────────────────────
 
 export function Avatar({ initials, size = 'md' }: { initials: string; size?: 'sm' | 'md' | 'lg' }) {
