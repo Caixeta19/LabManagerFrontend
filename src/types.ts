@@ -4,6 +4,7 @@ export interface User {
   id: string
   name: string
   email: string
+  registration: string
   role: UserRole
   status: "active" | "inactive"
   lastAccess: string
@@ -27,6 +28,7 @@ export interface Equipment {
   name: string
   tombstone: string
   labId: string
+  labName: string
   status: "available" | "in_use" | "maintenance"
   responsible: string
 }
@@ -36,11 +38,15 @@ export type ReservationStatus = "pending" | "confirmed" | "cancelled" | "expired
 export interface Reservation {
   id: string
   userId: string
+  userName: string
+  userRole: UserRole
   labId: string
+  labName: string
   date: string
   startTime: string
   endTime: string
   status: ReservationStatus
+  reason: string
   createdAt: string
 }
 
@@ -56,7 +62,7 @@ export interface Loan {
   status: LoanStatus
 }
 
-export type Page = "login" | "register" | "dashboard" | "labs" | "lab-detail" | "new-reservation" | "my-reservations" | "reservation-detail" | "qr-code" | "equipment" | "my-loans" | "all-reservations" | "admin-users" | "admin-labs" | "admin-equipment" | "admin-reservations" | "admin-loans"
+export type Page = "login" | "register" | "forgot-password" | "reset-password" | "dashboard" | "labs" | "lab-detail" | "new-reservation" | "my-reservations" | "reservation-detail" | "qr-code" | "check-in" | "equipment" | "my-loans" | "all-reservations" | "admin-users" | "admin-labs" | "admin-equipment" | "admin-reservations" | "admin-loans"
 
 export interface ToastMessage {
   id: number

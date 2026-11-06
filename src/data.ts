@@ -1,6 +1,6 @@
 import type { User, Lab, Equipment, Reservation, Loan, AppState } from './types';
 
-export const USERS: User[] = [
+export const USERS: any[] = [
   { id: 'u1', name: 'Ana Silva', email: 'ana.silva@instituicao.edu.br', role: 'student', status: 'active', lastAccess: '19/08/2026 14:32', initials: 'AS' },
   { id: 'u2', name: 'Bruno Costa', email: 'bruno.costa@instituicao.edu.br', role: 'student', status: 'active', lastAccess: '18/08/2026 09:15', initials: 'BC' },
   { id: 'u3', name: 'Carla Mendes', email: 'carla.mendes@instituicao.edu.br', role: 'student', status: 'active', lastAccess: '17/08/2026 11:00', initials: 'CM' },
@@ -56,7 +56,7 @@ export const LABS: Lab[] = [
   },
 ];
 
-export const EQUIPMENT: Equipment[] = [
+export const EQUIPMENT: any[] = [
   { id: 'eq1', name: 'Switch Cisco Catalyst 2960', tombstone: 'TB-0101', labId: 'lab1', status: 'available', responsible: 'Coordenação TI' },
   { id: 'eq2', name: 'Analisador de Protocolo Wireshark', tombstone: 'TB-0102', labId: 'lab1', status: 'in_use', responsible: 'Coordenação TI' },
   { id: 'eq3', name: 'Osciloscópio DSO-200', tombstone: 'TB-0231', labId: 'lab2', status: 'available', responsible: 'Coordenação TI' },
@@ -66,7 +66,7 @@ export const EQUIPMENT: Equipment[] = [
   { id: 'eq7', name: 'Braço Robótico 6 Eixos', tombstone: 'TB-0456', labId: 'lab4', status: 'available', responsible: 'Coordenação TI' },
 ];
 
-export const RESERVATIONS: Reservation[] = [
+export const RESERVATIONS: any[] = [
   { id: 'r1', userId: 'u1', labId: 'lab1', date: '2026-08-18', startTime: '14:00', endTime: '16:00', status: 'confirmed', createdAt: '2026-08-15 10:00' },
   { id: 'r2', userId: 'u1', labId: 'lab3', date: '2026-08-20', startTime: '09:00', endTime: '11:00', status: 'pending', createdAt: '2026-08-16 09:30' },
   { id: 'r3', userId: 'u1', labId: 'lab2', date: '2026-08-22', startTime: '10:00', endTime: '12:00', status: 'pending', createdAt: '2026-08-17 15:00' },
