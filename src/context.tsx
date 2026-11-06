@@ -369,6 +369,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     [reload],
   )
 
+  const reloadData = useCallback(
+    (keys?: DataKey[]) => (keys ? reload(keys) : retryLoad()),
+    [reload, retryLoad],
+  )
+
   const state = useMemo<AppState>(
     () => ({
       ...data,
@@ -394,10 +399,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         navigate,
         showToast,
         handleError,
-        reload: useCallback(
-          (keys?: DataKey[]) => (keys ? reload(keys) : retryLoad()),
-          [reload, retryLoad],
-        ),
+        reload: reloadData,
         login,
         logout: endSession,
         addReservation,

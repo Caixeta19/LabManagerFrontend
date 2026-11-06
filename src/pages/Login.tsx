@@ -1,13 +1,20 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useApp } from "../context"
 import { Btn, Input } from "../components/ui"
 import logoImg from "@/imports/ChatGPT_Image_19_de_ago._de_2026__20_24_51.png"
-import { ApiError } from "../api"
+import { ApiError, publicApi } from "../api"
+import type { PublicLabStatus, PublicSummary } from "../api/public"
 
 type LoginState = "idle" | "loading" | "error"
 
 const MSG_CONTA_BLOQUEADA =
   "Conta temporariamente bloqueada por segurança. Tente novamente mais tarde."
+
+const LAB_STATUS: Record<PublicLabStatus, { label: string; color: string }> = {
+  DISPONIVEL: { label: "Disponível", color: "#3FA796" },
+  EM_USO_AGORA: { label: "Em uso agora", color: "#E3A008" },
+  MANUTENCAO: { label: "Manutenção", color: "#8A7B9C" },
+}
 
 export default function Login() {
   const { login, showToast, navigate, handleError } = useApp()
@@ -16,12 +23,21 @@ export default function Login() {
   const [password, setPassword] = useState("")
   const [showPw, setShowPw] = useState(false)
   const [loginState, setLoginState] = useState<LoginState>("idle")
+  const [summary, setSummary] = useState<PublicSummary | null>(null)
+  const [summaryFailed, setSummaryFailed] = useState(false)
 
   const [errors, setErrors] = useState<{
     email?: string
     password?: string
     form?: string
   }>({})
+
+  useEffect(() => {
+    publicApi
+      .summary()
+      .then(setSummary)
+      .catch(() => setSummaryFailed(true))
+  }, [])
 
   function validate() {
     const e: typeof errors = {}
@@ -153,7 +169,9 @@ export default function Login() {
                 </svg>
               </div>
 
-              <div className="text-2xl font-800 text-white">4</div>
+              <div className="text-2xl font-800 text-white">
+                {summary?.laboratoriosAtivos ?? "—"}
+              </div>
 
               <div className="text-white/50 text-xs font-500 mt-0.5">
                 Laboratórios ativos
@@ -188,7 +206,9 @@ export default function Login() {
                 </svg>
               </div>
 
-              <div className="text-2xl font-800 text-white">12</div>
+              <div className="text-2xl font-800 text-white">
+                {summary?.reservasHoje ?? "—"}
+              </div>
 
               <div className="text-white/50 text-xs font-500 mt-0.5">
                 Reservas hoje
@@ -219,7 +239,9 @@ export default function Login() {
                 </svg>
               </div>
 
-              <div className="text-2xl font-800 text-white">7</div>
+              <div className="text-2xl font-800 text-white">
+                {summary?.equipamentos ?? "—"}
+              </div>
 
               <div className="text-white/50 text-xs font-500 mt-0.5">
                 Equipamentos
@@ -256,12 +278,61 @@ export default function Login() {
                 </svg>
               </div>
 
-              <div className="text-2xl font-800 text-white">6</div>
+              <div className="text-2xl font-800 text-white">
+                {summary?.usuarios ?? "—"}
+              </div>
 
               <div className="text-white/50 text-xs font-500 mt-0.5">
                 Usuários
               </div>
             </div>
+          </div>
+
+          {/* =================================================
+              STATUS DO SISTEMA
+          ================================================== */}
+          <div
+            className="rounded-xl p-4"
+            style={{
+              backgroundColor: "rgba(255,255,255,0.08)",
+            }}
+          >
+            <div className="text-white/50 text-xs font-500 mb-3">
+              Status do sistema
+            </div>
+
+            {summaryFailed ? (
+              <p className="text-white/70 text-sm">
+                Status indisponível no momento.
+              </p>
+            ) : !summary ? (
+              <p className="text-white/70 text-sm">Carregando...</p>
+            ) : summary.laboratorios.length === 0 ? (
+              <p className="text-white/70 text-sm">
+                Nenhum laboratório cadastrado.
+              </p>
+            ) : (
+              <ul className="space-y-2 max-h-36 overflow-y-auto">
+                {summary.laboratorios.map((lab) => (
+                  <li
+                    key={lab.nome}
+                    className="flex items-center justify-between gap-3 text-sm"
+                  >
+                    <span className="text-white truncate">{lab.nome}</span>
+
+                    <span className="flex items-center gap-1.5 text-xs text-white/70 flex-shrink-0">
+                      <span
+                        className="w-2 h-2 rounded-full"
+                        style={{
+                          backgroundColor: LAB_STATUS[lab.status].color,
+                        }}
+                      />
+                      {LAB_STATUS[lab.status].label}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </div>
 
@@ -402,6 +473,7 @@ export default function Login() {
               <div className="text-center">
                 <button
                   type="button"
+                  onClick={() => navigate("forgot-password")}
                   className="text-sm text-accent hover:underline font-500"
                 >
                   Esqueci minha senha

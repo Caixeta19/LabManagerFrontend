@@ -1,14 +1,17 @@
 import { useState } from "react"
 import { useApp } from "../context"
 import { Btn, Input } from "../components/ui"
+import { ApiError, authApi } from "../api"
+import { checkPassword } from "../utils"
 
 import logoImg from "@/imports/ChatGPT_Image_19_de_ago._de_2026__20_24_51.png"
 
 export default function Register() {
-  const { navigate, showToast } = useApp()
+  const { navigate, showToast, handleError } = useApp()
 
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
+  const [registration, setRegistration] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
 
@@ -16,6 +19,7 @@ export default function Register() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   const [loading, setLoading] = useState(false)
+  const [errors, setErrors] = useState<Record<string, string>>({})
 
   /* ============================================================
      VALIDAÇÕES
@@ -30,14 +34,9 @@ export default function Register() {
 
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i.test(normalizedEmail)
 
-  const passwordRequirements = {
-    minLength: password.length >= 8,
-    maxLength: password.length <= 64,
-    uppercase: /[A-Z]/.test(password),
-    lowercase: /[a-z]/.test(password),
-    number: /[0-9]/.test(password),
-    special: /[^A-Za-z0-9]/.test(password),
-  }
+  const trimmedRegistration = registration.trim()
+
+  const passwordRequirements = checkPassword(password)
 
   const isPasswordValid =
     passwordRequirements.minLength &&
@@ -53,7 +52,11 @@ export default function Register() {
     password === confirmPassword
 
   const formIsValid =
-    isNameValid && isEmailValid && isPasswordValid && passwordsMatch
+    isNameValid &&
+    isEmailValid &&
+    trimmedRegistration.length > 0 &&
+    isPasswordValid &&
+    passwordsMatch
 
   /* ============================================================
      FORÇA DA SENHA
@@ -83,7 +86,7 @@ export default function Register() {
      SUBMIT
   ============================================================ */
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
 
     if (!trimmedName) {
@@ -109,6 +112,11 @@ export default function Register() {
       return
     }
 
+    if (!trimmedRegistration) {
+      showToast("Informe sua matrícula.", "error")
+      return
+    }
+
     if (!isPasswordValid) {
       showToast("A senha não atende aos requisitos de segurança.", "error")
       return
@@ -119,20 +127,33 @@ export default function Register() {
       return
     }
 
+    setErrors({})
     setLoading(true)
 
-    /*
-     * Cadastro atualmente simulado.
-     * Nenhum usuário é salvo no banco.
-     */
-
-    setTimeout(() => {
-      setLoading(false)
+    try {
+      await authApi.register({
+        name: trimmedName,
+        email: normalizedEmail,
+        password,
+        registration: trimmedRegistration,
+      })
 
       showToast("Conta criada com sucesso!")
 
       navigate("login")
-    }, 800)
+    } catch (error) {
+      if (error instanceof ApiError && error.code === "ERR_USER_001") {
+        setErrors({ registration: error.message })
+      } else if (error instanceof ApiError && error.code === "ERR_USER_002") {
+        setErrors({ email: error.message })
+      } else if (error instanceof ApiError && error.status === 422) {
+        setErrors(error.fields)
+      } else {
+        handleError(error)
+      }
+    } finally {
+      setLoading(false)
+    }
   }
 
   /* ============================================================
@@ -480,8 +501,12 @@ export default function Register() {
                     type="email"
                     placeholder="seu.nome@instituicao.edu.br"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => {
+                      setEmail(e.target.value)
+                      setErrors((prev) => ({ ...prev, email: "" }))
+                    }}
                     autoComplete="email"
+                    error={errors.email}
                   />
 
                   {email.length > 0 && !isEmailValid && (
@@ -490,11 +515,30 @@ export default function Register() {
                     </p>
                   )}
 
-                  {email.length > 0 && isEmailValid && (
+                  {email.length > 0 && isEmailValid && !errors.email && (
                     <p className="mt-1.5 text-xs text-green-600">
                       ✓ E-mail válido
                     </p>
                   )}
+                </div>
+
+                {/* =================================================
+                    MATRÍCULA
+                ================================================== */}
+
+                <div className="required-field">
+                  <Input
+                    label="Matrícula"
+                    type="text"
+                    placeholder="Digite sua matrícula"
+                    value={registration}
+                    onChange={(e) => {
+                      setRegistration(e.target.value)
+                      setErrors((prev) => ({ ...prev, registration: "" }))
+                    }}
+                    autoComplete="off"
+                    error={errors.registration}
+                  />
                 </div>
 
                 {/* =================================================
@@ -552,6 +596,12 @@ export default function Register() {
                       <EyeIcon hidden={showPassword} />
                     </button>
                   </div>
+
+                  {errors.password && (
+                    <span className="text-xs text-danger">
+                      {errors.password}
+                    </span>
+                  )}
 
                   {/* REQUISITOS */}
 

@@ -6,6 +6,8 @@ import Header from "./components/Header"
 
 import Login from "./pages/Login"
 import Register from "./pages/Register"
+import ForgotPassword from "./pages/ForgotPassword"
+import ResetPassword from "./pages/ResetPassword"
 
 import Dashboard from "./pages/Dashboard"
 import Labs, { LabDetail } from "./pages/Labs"
@@ -84,6 +86,17 @@ function AppShell() {
     )
   }
 
+  /* O link do e-mail abre esta tela mesmo com outra sessão aberta no navegador. */
+  if (page === "reset-password") {
+    return (
+      <>
+        <ResetPassword />
+
+        <ToastContainer toasts={toasts} />
+      </>
+    )
+  }
+
   /*
    * Login e Cadastro ficam fora do sistema
    * principal enquanto não existe usuário logado.
@@ -91,7 +104,13 @@ function AppShell() {
   if (!currentUser) {
     return (
       <>
-        {page === "register" ? <Register /> : <Login />}
+        {page === "register" ? (
+          <Register />
+        ) : page === "forgot-password" ? (
+          <ForgotPassword />
+        ) : (
+          <Login />
+        )}
 
         <ToastContainer toasts={toasts} />
       </>
