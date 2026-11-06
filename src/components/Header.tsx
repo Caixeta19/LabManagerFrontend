@@ -8,6 +8,7 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
   'my-reservations': { title: 'Minhas reservas', subtitle: 'Gerencie suas reservas' },
   'reservation-detail': { title: 'Detalhes da reserva', subtitle: 'Informações da reserva' },
   'qr-code': { title: 'QR Code da reserva', subtitle: 'Apresente na entrada do laboratório' },
+  'check-in': { title: 'Check-in', subtitle: 'Registre sua chegada ao laboratório' },
   equipment: { title: 'Equipamentos disponíveis', subtitle: 'Solicite empréstimo de equipamentos' },
   'my-loans': { title: 'Meus empréstimos', subtitle: 'Acompanhe seus empréstimos de equipamentos' },
   'all-reservations': { title: 'Todas as reservas', subtitle: 'Visão global de reservas de alunos' },

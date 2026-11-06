@@ -38,6 +38,11 @@ const ListIcon = () => (
     <path strokeLinecap="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
   </svg>
 );
+const ScanIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
+    <path strokeLinecap="round" d="M4 8V5a1 1 0 011-1h3M16 4h3a1 1 0 011 1v3M20 16v3a1 1 0 01-1 1h-3M8 20H5a1 1 0 01-1-1v-3M7 12h10" />
+  </svg>
+);
 const ToolIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
     <path strokeLinecap="round" d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z" />
@@ -65,14 +70,22 @@ export default function Sidebar() {
 
   const role = currentUser.role;
 
-  const general: NavItem[] = [
-    { label: 'Dashboard', page: 'dashboard', icon: <HomeIcon /> },
-    { label: 'Laboratórios', page: 'labs', icon: <LabIcon /> },
-    { label: 'Nova reserva', page: 'new-reservation', icon: <PlusIcon /> },
-    { label: 'Minhas reservas', page: 'my-reservations', icon: <CalendarIcon /> },
-    { label: 'Equipamentos disponíveis', page: 'equipment', icon: <ToolIcon /> },
-    { label: 'Meus empréstimos', page: 'my-loans', icon: <PackageIcon /> },
-  ];
+  // O back não deixa o ADMIN reservar nem pedir empréstimo: essas páginas são de ALUNO e PROFESSOR
+  const general: NavItem[] = role === 'admin'
+    ? [
+        { label: 'Dashboard', page: 'dashboard', icon: <HomeIcon /> },
+        { label: 'Laboratórios', page: 'labs', icon: <LabIcon /> },
+        { label: 'Equipamentos disponíveis', page: 'equipment', icon: <ToolIcon /> },
+      ]
+    : [
+        { label: 'Dashboard', page: 'dashboard', icon: <HomeIcon /> },
+        { label: 'Laboratórios', page: 'labs', icon: <LabIcon /> },
+        { label: 'Nova reserva', page: 'new-reservation', icon: <PlusIcon /> },
+        { label: 'Minhas reservas', page: 'my-reservations', icon: <CalendarIcon /> },
+        { label: 'Check-in', page: 'check-in', icon: <ScanIcon /> },
+        { label: 'Equipamentos disponíveis', page: 'equipment', icon: <ToolIcon /> },
+        { label: 'Meus empréstimos', page: 'my-loans', icon: <PackageIcon /> },
+      ];
 
   const professorItems: NavItem[] = [
     { label: 'Todas as reservas', page: 'all-reservations', icon: <ListIcon /> },

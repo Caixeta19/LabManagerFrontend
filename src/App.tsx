@@ -14,6 +14,7 @@ import Labs, { LabDetail } from "./pages/Labs"
 import NewReservation from "./pages/NewReservation"
 import MyReservations, { ReservationDetail } from "./pages/MyReservations"
 
+import CheckIn from "./pages/CheckIn"
 import Equipment from "./pages/Equipment"
 import MyLoans from "./pages/MyLoans"
 import AllReservations from "./pages/AllReservations"
@@ -45,6 +46,9 @@ function PageContent() {
 
     case "reservation-detail":
       return <ReservationDetail />
+
+    case "check-in":
+      return <CheckIn />
 
     case "equipment":
       return <Equipment />
