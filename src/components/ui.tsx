@@ -86,7 +86,7 @@ interface BtnProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   loading?: boolean;
 }
 
-export function Btn({ variant = 'primary', size = 'md', loading, children, className = '', ...rest }: BtnProps) {
+export function Btn({ variant = 'primary', size = 'md', loading, disabled, children, className = '', ...rest }: BtnProps) {
   const base = 'inline-flex items-center justify-center font-600 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:opacity-50 disabled:pointer-events-none';
   const sizes = { sm: 'px-3 py-1.5 text-sm gap-1.5', md: 'px-4 py-2 text-sm gap-2' };
   const variants = {
@@ -96,7 +96,7 @@ export function Btn({ variant = 'primary', size = 'md', loading, children, class
     ghost: 'text-text-secondary hover:bg-border focus:ring-border',
   };
   return (
-    <button className={`${base} ${sizes[size]} ${variants[variant]} ${className}`} disabled={loading || rest.disabled} {...rest}>
+    <button className={`${base} ${sizes[size]} ${variants[variant]} ${className}`} disabled={loading || disabled} {...rest}>
       {loading && (
         <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />

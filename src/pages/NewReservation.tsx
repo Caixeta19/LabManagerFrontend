@@ -1,8 +1,8 @@
 import { useState } from "react"
 import { useApp } from "../context"
 import { Btn, Select, Modal } from "../components/ui"
-import { formatDate } from "../data"
-import type { Reservation } from "../types"
+import { ApiError } from "../api"
+import { formatDate, todayISO } from "../utils"
 
 const TIME_SLOTS = [
   "07:00",
@@ -54,7 +54,7 @@ function MiniCalendar({
 
   const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate()
 
-  const todayStr = today.toISOString().split("T")[0]
+  const todayStr = todayISO()
 
   function pad(d: number) {
     return `${viewYear}-${String(viewMonth + 1).padStart(
@@ -181,7 +181,8 @@ function MiniCalendar({
 type Step = 1 | 2
 
 export default function NewReservation() {
-  const { state, currentUser, navigate, addReservation, pageParams } = useApp()
+  const { state, currentUser, navigate, addReservation, pageParams, handleError } =
+    useApp()
 
   const [step, setStep] = useState<Step>(1)
 
@@ -201,19 +202,6 @@ export default function NewReservation() {
   const [successModal, setSuccessModal] = useState(false)
 
   const activeLabs = state.labs.filter((l) => l.status === "active")
-
-  // Verifica conflito
-  function hasConflict() {
-    return state.reservations.some(
-      (r) =>
-        r.labId === labId &&
-        r.date === date &&
-        r.status !== "cancelled" &&
-        r.status !== "expired" &&
-        r.startTime < endTime &&
-        r.endTime > startTime,
-    )
-  }
 
   function validateStep1() {
     const e: Record<string, string> = {}
@@ -256,15 +244,6 @@ export default function NewReservation() {
       return
     }
 
-    if (hasConflict()) {
-      setErrors({
-        conflict:
-          "Este horário já está reservado. Escolha outro horário ou data.",
-      })
-
-      return
-    }
-
     setErrors({})
 
     setStep(2)
@@ -273,40 +252,31 @@ export default function NewReservation() {
   async function handleConfirm() {
     setProcessing(true)
 
-    await new Promise((r) => setTimeout(r, 1200))
+    try {
+      await addReservation({
+        labId,
+        date,
+        startTime,
+        endTime,
+        reason: reason.trim(),
+      })
 
-    /*
-      O motivo é salvo junto da solicitação.
-      O tipo abaixo permite adicionar o campo
-      sem quebrar o Reservation atual.
-    */
-    const reservation: Reservation & {
-      reason: string
-    } = {
-      id: `r${Date.now()}`,
-
-      userId: currentUser!.id,
-
-      labId,
-
-      date,
-
-      startTime,
-
-      endTime,
-
-      status: "pending",
-
-      createdAt: new Date().toISOString().slice(0, 16).replace("T", " "),
-
-      reason: reason.trim(),
+      setSuccessModal(true)
+    } catch (error) {
+      if (error instanceof ApiError && error.code === "ERR_RESERVA_001") {
+        setErrors({ conflict: error.message })
+        setStep(1)
+      } else if (error instanceof ApiError && error.status === 422) {
+        setErrors({
+          conflict: Object.values(error.fields)[0] ?? error.message,
+        })
+        setStep(1)
+      } else {
+        handleError(error)
+      }
+    } finally {
+      setProcessing(false)
     }
-
-    addReservation(reservation)
-
-    setProcessing(false)
-
-    setSuccessModal(true)
   }
 
   const selectedLab = activeLabs.find((l) => l.id === labId)
@@ -536,7 +506,8 @@ export default function NewReservation() {
                       >
                         <path strokeLinecap="round" d="M5 13l4 4L19 7" />
                       </svg>
-                      Horário disponível! Prossiga para enviar a solicitação.
+                      Prossiga para enviar a solicitação. A disponibilidade é
+                      confirmada no envio.
                     </div>
                   </div>
                 )}
@@ -623,8 +594,9 @@ export default function NewReservation() {
             </div>
 
             <div className="mt-4 p-4 rounded-xl bg-bg text-xs text-text-secondary">
-              Sua solicitação será enviada para análise. A reserva ficará
-              pendente até a confirmação pelo responsável pelo laboratório.
+              A reserva ficará pendente até você confirmá-la pelo link enviado
+              por e-mail cerca de 1 hora antes do início. Sem a confirmação, ela
+              expira e o check-in não funciona.
             </div>
           </div>
 
@@ -690,8 +662,8 @@ export default function NewReservation() {
           </div>
 
           <p className="text-sm text-text-secondary mb-6">
-            O status está <strong>Pendente</strong>. Você receberá uma
-            confirmação após a análise da solicitação.
+            O status está <strong>Pendente</strong>. Você receberá o link de
+            confirmação por e-mail cerca de 1 hora antes do início.
           </p>
 
           <Btn
