@@ -1,41 +1,34 @@
-# figma-make-app
+# LabManager — Front
 
-React + Vite + Tailwind CSS project running inside Figma Make.
+Interface do LabManager: reserva de laboratórios, check-in por QR Code e empréstimo de equipamentos.
+Consome a API do repositório `LabManagerBackend` (Spring Boot).
 
-## Development Server
+## Como rodar
 
-A Vite development server is **already running** on `$PORT` (default 8443). You don't need to start it manually.
+1. Suba o back (veja o README dele). Ele precisa aceitar a origem do front em `CORS_ALLOWED_ORIGINS`.
+2. `cp .env.example .env` e aponte `VITE_API_URL` para o back.
+3. `npm install`
+4. `npm run dev`: abre em http://localhost:5173. Para outra porta, use `PORT=5174 npm run dev`.
 
-- Preview URL: The user can access the running app through the preview panel
-- Hot reload: Changes to source files are reflected immediately
+`npm run build` gera o `dist/`. Ele não checa tipos: rode também `npx tsc --noEmit`.
 
-## Project Structure
+## Estrutura
 
-This is the canonical project structure. Start with task-relevant files below. Only follow imports or inspect other files when required, when a documented path is missing, or when the repository contradicts this guide.
+- `src/api/client.ts`: único ponto que chama `fetch`. Coloca o token e transforma o corpo de erro em `ApiError`.
+- `src/api/mappers.ts`: converte DTOs do back nos tipos do front (`ALUNO` ↔ `student`, `dataHoraInicio` ↔ `date` + `startTime`).
+- `src/api/*.ts`: um serviço por recurso.
+- `src/context.tsx`: `useApp()` guarda sessão, `state` global, navegação e mutações.
+- `src/utils.ts`: datas no fuso de Brasília, buscas por id e regras de senha.
+- `src/pages/`: uma tela por arquivo. `src/components/ui.tsx` tem os componentes base.
 
-- `src/main.tsx` - React entrypoint; imports `src/index.css` and mounts `src/App.tsx` into the `#root` element
-- `src/App.tsx` - Primary application component and the usual starting point for UI work
-- `src/index.css` - Global CSS entrypoint and Tailwind CSS v4 import
-- `index.html` - Vite HTML shell containing the `#root` element and loading `src/main.tsx`
-- `package.json` - Project dependencies and the Vite build, development, preview, and formatting scripts
-- `vite.config.ts` - Vite configuration with React, Tailwind CSS v4, and Figma Make plugins plus the `@` alias for `src`
-- `.mise.toml` - Toolchain versions for Node.js and pnpm
+## Convenções
 
-## Dependencies
+- Não há React Router: a navegação é por estado, com `navigate("pagina", { id })`. A única URL lida é `/redefinir-senha?token=...`.
+- As telas leem `state` e chamam as mutações do contexto. Elas não usam `fetch` diretamente.
+- As mutações são assíncronas e lançam `ApiError`. No `catch`, use `handleError(e)` para o aviso padrão, ou `e.fields` para mostrar os erros no formulário.
+- Datas e horas da API são horário de Brasília sem fuso (`yyyy-MM-ddTHH:mm:ss`). Trate como texto: nunca use `toISOString()`, que converte para UTC. Para "hoje", use `todayISO()`.
+- As regras de negócio ficam no back. O front só valida para dar retorno rápido ao usuário.
 
-- Runtime: React 19 and React DOM 19
-- Styling: Tailwind CSS v4 with the `@tailwindcss/vite` plugin
-- Build tooling: Vite 8, TypeScript 5.7, and `@vitejs/plugin-react`
-- Formatting: oxfmt
+## Estilo
 
-## Styling
-
-This project uses **Tailwind CSS v4** through the `@tailwindcss/vite` plugin configured in `vite.config.ts`. `src/index.css` imports Tailwind with `@import 'tailwindcss';`. Use Tailwind utility classes directly in JSX and put global CSS or Tailwind v4 theme customization in `src/index.css`. This scaffold does not need a Tailwind config file or PostCSS config.
-
-`src/main.tsx` imports `src/index.css`, so global font wiring belongs in `src/index.css`. Keep CSS `@import` statements first, then add any `@font-face` rules and font-family defaults there.
-
-## Code quality
-
-- Use double quotes for strings containing apostrophes (`"We're here to help"`), or escape them in single-quoted strings. An unescaped apostrophe in a single-quoted string breaks the build.
-- Ensure JSX tags are closed and braces are balanced.
-- Export components as default exports.
+Tailwind CSS v4 pelo plugin `@tailwindcss/vite`; o tema fica em `src/index.css`. Preserve o visual existente.
