@@ -2,12 +2,12 @@ import { useState } from "react"
 import { useApp } from "../context"
 import { Btn, Input } from "../components/ui"
 import logoImg from "@/imports/ChatGPT_Image_19_de_ago._de_2026__20_24_51.png"
-import { USERS } from "../data"
+import { ApiError } from "../api"
 
 type LoginState = "idle" | "loading" | "error"
 
 export default function Login() {
-  const { login, showToast, navigate } = useApp()
+  const { login, showToast, navigate, handleError } = useApp()
 
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -49,24 +49,20 @@ export default function Login() {
     setErrors({})
     setLoginState("loading")
 
-    await new Promise((resolve) => setTimeout(resolve, 1200))
+    try {
+      const user = await login(email.trim(), password)
 
-    const user = USERS.find(
-      (u) => u.email.toLowerCase() === email.toLowerCase(),
-    )
-
-    if (user) {
       setLoginState("idle")
 
       showToast(`Bem-vindo(a), ${user.name.split(" ")[0]}!`)
-
-      login(user)
-    } else {
+    } catch (error) {
       setLoginState("error")
 
-      setErrors({
-        form: "E-mail ou senha incorretos. Verifique suas credenciais.",
-      })
+      if (error instanceof ApiError && error.status < 500) {
+        setErrors({ form: error.message })
+      } else {
+        handleError(error)
+      }
     }
   }
 
