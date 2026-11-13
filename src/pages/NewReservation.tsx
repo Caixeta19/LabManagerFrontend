@@ -1,26 +1,12 @@
 import { useState } from "react"
 import { useApp } from "../context"
-import { Btn, Select, Modal } from "../components/ui"
+import { Btn, Input, Select, Modal } from "../components/ui"
 import { ApiError } from "../api"
 import { formatDate, todayISO } from "../utils"
 
-const TIME_SLOTS = [
-  "07:00",
-  "08:00",
-  "09:00",
-  "10:00",
-  "11:00",
-  "12:00",
-  "13:00",
-  "14:00",
-  "15:00",
-  "16:00",
-  "17:00",
-  "18:00",
-  "19:00",
-  "20:00",
-  "21:00",
-]
+// Expediente permitido para reservas ("HH:mm")
+const HORA_MIN = "07:00"
+const HORA_MAX = "21:00"
 
 // Calendar mini-component
 function MiniCalendar({
@@ -222,8 +208,30 @@ export default function NewReservation() {
       e.endTime = "Selecione o horário de término."
     }
 
-    if (startTime && endTime && startTime >= endTime) {
+    const foraDoExpediente = (t: string) => t < HORA_MIN || t > HORA_MAX
+    const msgExpediente = `Horário permitido: ${HORA_MIN} às ${HORA_MAX}.`
+
+    if (startTime && foraDoExpediente(startTime)) {
+      e.startTime = msgExpediente
+    }
+
+    if (endTime && foraDoExpediente(endTime)) {
+      e.endTime = msgExpediente
+    }
+
+    if (startTime && endTime && startTime >= endTime && !e.endTime) {
       e.endTime = "O término deve ser após o início."
+    }
+
+    if (date && date === todayISO() && startTime && !e.startTime) {
+      const now = new Date()
+      const agora = `${String(now.getHours()).padStart(2, "0")}:${String(
+        now.getMinutes(),
+      ).padStart(2, "0")}`
+
+      if (startTime < agora) {
+        e.startTime = "O horário de início já passou."
+      }
     }
 
     // NOVO: motivo obrigatório
@@ -370,7 +378,11 @@ export default function NewReservation() {
               {/* HORÁRIOS */}
 
               <div className="grid grid-cols-2 gap-4">
-                <Select
+                <Input
+                  type="time"
+                  step={60}
+                  min={HORA_MIN}
+                  max="20:59"
                   label="Horário de início"
                   value={startTime}
                   onChange={(e) => {
@@ -378,17 +390,13 @@ export default function NewReservation() {
                     setErrors({})
                   }}
                   error={errors.startTime}
-                >
-                  <option value="">Selecione</option>
+                />
 
-                  {TIME_SLOTS.slice(0, -1).map((t) => (
-                    <option key={t} value={t}>
-                      {t}
-                    </option>
-                  ))}
-                </Select>
-
-                <Select
+                <Input
+                  type="time"
+                  step={60}
+                  min="07:01"
+                  max={HORA_MAX}
                   label="Horário de término"
                   value={endTime}
                   onChange={(e) => {
@@ -396,16 +404,12 @@ export default function NewReservation() {
                     setErrors({})
                   }}
                   error={errors.endTime}
-                >
-                  <option value="">Selecione</option>
-
-                  {TIME_SLOTS.slice(1).map((t) => (
-                    <option key={t} value={t}>
-                      {t}
-                    </option>
-                  ))}
-                </Select>
+                />
               </div>
+
+              <p className="text-xs text-text-secondary -mt-3">
+                Informe qualquer horário entre {HORA_MIN} e {HORA_MAX}.
+              </p>
 
               {/* =================================================
                   NOVO: MOTIVO DA SOLICITAÇÃO
