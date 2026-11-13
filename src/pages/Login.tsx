@@ -1,10 +1,14 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useApp } from "../context"
 import { Btn, Input } from "../components/ui"
 import logoImg from "@/imports/ChatGPT_Image_19_de_ago._de_2026__20_24_51.png"
-import { ApiError } from "../api"
+import { ApiError, publicApi } from "../api"
+import type { PublicSummary } from "../api/public"
 
 type LoginState = "idle" | "loading" | "error"
+
+const MSG_CONTA_BLOQUEADA =
+  "Conta temporariamente bloqueada por segurança. Tente novamente mais tarde."
 
 export default function Login() {
   const { login, showToast, navigate, handleError } = useApp()
@@ -13,12 +17,20 @@ export default function Login() {
   const [password, setPassword] = useState("")
   const [showPw, setShowPw] = useState(false)
   const [loginState, setLoginState] = useState<LoginState>("idle")
+  const [summary, setSummary] = useState<PublicSummary | null>(null)
 
   const [errors, setErrors] = useState<{
     email?: string
     password?: string
     form?: string
   }>({})
+
+  useEffect(() => {
+    publicApi
+      .summary()
+      .then(setSummary)
+      .catch(() => {})
+  }, [])
 
   function validate() {
     const e: typeof errors = {}
@@ -52,14 +64,16 @@ export default function Login() {
     try {
       const user = await login(email.trim(), password)
 
-      setLoginState("idle")
-
       showToast(`Bem-vindo(a), ${user.name.split(" ")[0]}!`)
     } catch (error) {
       setLoginState("error")
 
-      if (error instanceof ApiError && error.status < 500) {
+      if (error instanceof ApiError && error.code === "ERR_AUTH_LOCKED") {
+        setErrors({ form: MSG_CONTA_BLOQUEADA })
+      } else if (error instanceof ApiError && error.status === 401) {
         setErrors({ form: error.message })
+      } else if (error instanceof ApiError && error.status === 422) {
+        setErrors({ email: error.fields.email, password: error.fields.senha })
       } else {
         handleError(error)
       }
@@ -148,7 +162,9 @@ export default function Login() {
                 </svg>
               </div>
 
-              <div className="text-2xl font-800 text-white">4</div>
+              <div className="text-2xl font-800 text-white">
+                {summary?.laboratoriosAtivos ?? "—"}
+              </div>
 
               <div className="text-white/50 text-xs font-500 mt-0.5">
                 Laboratórios ativos
@@ -183,7 +199,9 @@ export default function Login() {
                 </svg>
               </div>
 
-              <div className="text-2xl font-800 text-white">12</div>
+              <div className="text-2xl font-800 text-white">
+                {summary?.reservasHoje ?? "—"}
+              </div>
 
               <div className="text-white/50 text-xs font-500 mt-0.5">
                 Reservas hoje
@@ -214,7 +232,9 @@ export default function Login() {
                 </svg>
               </div>
 
-              <div className="text-2xl font-800 text-white">7</div>
+              <div className="text-2xl font-800 text-white">
+                {summary?.equipamentos ?? "—"}
+              </div>
 
               <div className="text-white/50 text-xs font-500 mt-0.5">
                 Equipamentos
@@ -251,7 +271,9 @@ export default function Login() {
                 </svg>
               </div>
 
-              <div className="text-2xl font-800 text-white">6</div>
+              <div className="text-2xl font-800 text-white">
+                {summary?.usuarios ?? "—"}
+              </div>
 
               <div className="text-white/50 text-xs font-500 mt-0.5">
                 Usuários
@@ -397,6 +419,7 @@ export default function Login() {
               <div className="text-center">
                 <button
                   type="button"
+                  onClick={() => navigate("forgot-password")}
                   className="text-sm text-accent hover:underline font-500"
                 >
                   Esqueci minha senha

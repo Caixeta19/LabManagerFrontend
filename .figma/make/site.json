@@ -1,6 +1,4 @@
 {
-  "title": "LabManager",
-  "language": "pt-BR",
   "description": "Sistema de gestão de laboratórios: reservas, check-in por QR Code e empréstimo de equipamentos.",
   "robots": {
     "index": false
@@ -8,5 +6,7 @@
   "accessibility": {
     "addBypassLinks": false,
     "ignoreReducedMotion": false
-  }
+  },
+  "title": "LabManager",
+  "language": "pt-BR"
 }
