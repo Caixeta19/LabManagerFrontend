@@ -8,12 +8,35 @@ const SCANNER_ID = "checkin-scanner"
 
 const ERROR_MESSAGES: Record<string, string> = {
   ERR_CHECKIN_001: "Sua reserva ainda não foi confirmada. Verifique seu e-mail.",
-  ERR_CHECKIN_002: "QR Code inválido ou fora do horário permitido.",
+  ERR_CHECKIN_002:
+    "QR Code inválido ou você não tem reserva neste laboratório agora. O check-in abre 15 minutos antes do início.",
   ERR_CHECKIN_003: "Check-in já realizado para esta reserva.",
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+type Codigo = { tipo: "lab"; token: string } | { tipo: "reserva"; codigo: string }
+
+/**
+ * O QR da porta do laboratório leva a URL `.../check-in?lab={token}`; o QR antigo da reserva leva
+ * um UUID. Digitado à mão, aceita os dois (e o token do laboratório puro).
+ */
+function interpretar(texto: string): Codigo | null {
+  const valor = texto.trim()
+  if (!valor) return null
+
+  try {
+    const lab = new URL(valor).searchParams.get("lab")
+    if (lab) return { tipo: "lab", token: lab }
+  } catch {
+    // não é URL
+  }
+
+  return UUID_RE.test(valor) ? { tipo: "reserva", codigo: valor } : { tipo: "lab", token: valor }
+}
+
 export default function CheckIn() {
-  const { handleError } = useApp()
+  const { handleError, pageParams } = useApp()
 
   const [code, setCode] = useState("")
   const [scanning, setScanning] = useState(false)
@@ -23,6 +46,7 @@ export default function CheckIn() {
 
   const scannerRef = useRef<Html5Qrcode | null>(null)
   const processingRef = useRef(false)
+  const linkUsadoRef = useRef(false)
 
   async function stopScanner() {
     const scanner = scannerRef.current
@@ -43,7 +67,7 @@ export default function CheckIn() {
   }, [])
 
   async function submit(value: string) {
-    const codigo = value.trim()
+    const codigo = interpretar(value)
     if (!codigo || processingRef.current) return
 
     processingRef.current = true
@@ -52,7 +76,11 @@ export default function CheckIn() {
     setSuccess(false)
 
     try {
-      await checkinApi.checkIn(codigo)
+      if (codigo.tipo === "lab") {
+        await checkinApi.checkInLab(codigo.token)
+      } else {
+        await checkinApi.checkIn(codigo.codigo)
+      }
       setSuccess(true)
       setCode("")
     } catch (err) {
@@ -66,6 +94,14 @@ export default function CheckIn() {
       setProcessing(false)
     }
   }
+
+  // Aberto pelo link do QR do laboratório (câmera do celular): faz o check-in uma vez e limpa a URL
+  useEffect(() => {
+    if (!pageParams.lab || linkUsadoRef.current) return
+    linkUsadoRef.current = true
+    window.history.replaceState(null, "", "/")
+    submit(pageParams.lab) // token do laboratório (nunca tem formato de UUID)
+  }, [pageParams.lab])
 
   async function startScanner() {
     setError("")
@@ -112,12 +148,17 @@ export default function CheckIn() {
 
       {error && <AlertBanner type="error" message={error} />}
 
+      {processing && !scanning && (
+        <p className="text-sm text-text-secondary">Registrando check-in...</p>
+      )}
+
       <div className="bg-white rounded-2xl border border-border p-6">
         <h2 className="text-base font-700 text-text mb-1">Ler QR Code</h2>
 
         <p className="text-sm text-text-secondary mb-5">
-          Aponte a câmera para o QR Code da sua reserva, dentro do horário
-          reservado.
+          Aponte a câmera para o QR Code colado na porta do laboratório. O check-in
+          vale para a sua reserva confirmada nesse laboratório, de 15 minutos antes
+          do início até o fim.
         </p>
 
         <div
@@ -153,7 +194,7 @@ export default function CheckIn() {
           label="Código do QR Code"
           value={code}
           onChange={(e) => setCode(e.target.value)}
-          placeholder="Código lido do QR Code"
+          placeholder="Código do laboratório ou da reserva"
           autoComplete="off"
         />
 
