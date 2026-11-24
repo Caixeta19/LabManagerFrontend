@@ -43,7 +43,7 @@ function LabIllustration({ labId }: { labId: string }) {
 export default function Labs() {
   const { state, currentUser, navigate } = useApp();
   const [search, setSearch] = useState('');
-  const canReserve = currentUser?.role !== 'admin';
+  const canReserve = !!currentUser;
 
   const filtered = state.labs.filter(l =>
     l.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -218,6 +218,7 @@ export function LabDetail() {
             <div className="bg-bg rounded-xl p-4 space-y-3">
               <div><div className="text-xs text-text-secondary">Capacidade</div><div className="text-sm font-600 text-text mt-0.5">{lab.capacity} pessoas</div></div>
               <div><div className="text-xs text-text-secondary">Funcionamento</div><div className="text-sm font-600 text-text mt-0.5">{lab.hours || 'Não informado'}</div></div>
+              <div><div className="text-xs text-text-secondary">Reservas</div><div className="text-sm font-600 text-text mt-0.5">{lab.bookingOpenTime ? `${lab.bookingOpenTime} às ${lab.bookingCloseTime}` : 'Qualquer horário'}</div></div>
               <div><div className="text-xs text-text-secondary mb-0.5">Status</div>
                 <LabStatusDot status={lab.status} />
               </div>
@@ -247,7 +248,7 @@ export function LabDetail() {
           </div>
         </div>
         <div className="px-6 pb-6">
-          {lab.status === 'active' && currentUser?.role !== 'admin' && (
+          {lab.status === 'active' && currentUser && (
             <Btn onClick={() => navigate('new-reservation', { labId: lab.id })} className="w-full justify-center py-3">
               Reservar laboratório
             </Btn>

@@ -70,22 +70,16 @@ export default function Sidebar() {
 
   const role = currentUser.role;
 
-  // O back não deixa o ADMIN reservar nem pedir empréstimo: essas páginas são de ALUNO e PROFESSOR
-  const general: NavItem[] = role === 'admin'
-    ? [
-        { label: 'Dashboard', page: 'dashboard', icon: <HomeIcon /> },
-        { label: 'Laboratórios', page: 'labs', icon: <LabIcon /> },
-        { label: 'Equipamentos disponíveis', page: 'equipment', icon: <ToolIcon /> },
-      ]
-    : [
-        { label: 'Dashboard', page: 'dashboard', icon: <HomeIcon /> },
-        { label: 'Laboratórios', page: 'labs', icon: <LabIcon /> },
-        { label: 'Nova reserva', page: 'new-reservation', icon: <PlusIcon /> },
-        { label: 'Minhas reservas', page: 'my-reservations', icon: <CalendarIcon /> },
-        { label: 'Check-in', page: 'check-in', icon: <ScanIcon /> },
-        { label: 'Equipamentos disponíveis', page: 'equipment', icon: <ToolIcon /> },
-        { label: 'Meus empréstimos', page: 'my-loans', icon: <PackageIcon /> },
-      ];
+  // Todos os papéis reservam, fazem check-in e pedem empréstimo (o ADMIN também)
+  const general: NavItem[] = [
+    { label: 'Dashboard', page: 'dashboard', icon: <HomeIcon /> },
+    { label: 'Laboratórios', page: 'labs', icon: <LabIcon /> },
+    { label: 'Nova reserva', page: 'new-reservation', icon: <PlusIcon /> },
+    { label: 'Minhas reservas', page: 'my-reservations', icon: <CalendarIcon /> },
+    { label: 'Check-in', page: 'check-in', icon: <ScanIcon /> },
+    { label: 'Equipamentos disponíveis', page: 'equipment', icon: <ToolIcon /> },
+    { label: 'Meus empréstimos', page: 'my-loans', icon: <PackageIcon /> },
+  ];
 
   const professorItems: NavItem[] = [
     { label: 'Todas as reservas', page: 'all-reservations', icon: <ListIcon /> },

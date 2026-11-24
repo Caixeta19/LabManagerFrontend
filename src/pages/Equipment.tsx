@@ -14,7 +14,7 @@ export default function Equipment() {
   const [successModal, setSuccessModal] = useState(false);
   const [loanError, setLoanError] = useState('');
 
-  const canRequest = currentUser?.role !== 'admin';
+  const canRequest = !!currentUser;
 
   const allFiltered = state.equipment.filter(e =>
     e.name.toLowerCase().includes(search.toLowerCase()) ||
