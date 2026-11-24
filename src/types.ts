@@ -36,7 +36,7 @@ export interface Equipment {
   responsible: string
 }
 
-export type ReservationStatus = "pending" | "confirmed" | "cancelled" | "expired"
+export type ReservationStatus = "pending" | "confirmed" | "cancelled" | "expired" | "no_show"
 
 export interface Reservation {
   id: string

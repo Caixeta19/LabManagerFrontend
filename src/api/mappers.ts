@@ -20,6 +20,7 @@ export type ApiReserveStatus =
   | "CONFIRMADA"
   | "CANCELADA"
   | "EXPIRADA"
+  | "NAO_COMPARECEU"
 export type ApiLoanStatus = "ATIVO" | "ATRASADO" | "DEVOLVIDO"
 
 export interface UserDTO {
@@ -135,6 +136,7 @@ const RESERVATION_STATUS_FROM_API: Record<ApiReserveStatus, ReservationStatus> =
     CONFIRMADA: "confirmed",
     CANCELADA: "cancelled",
     EXPIRADA: "expired",
+    NAO_COMPARECEU: "no_show",
   }
 
 const LOAN_STATUS_FROM_API: Record<ApiLoanStatus, LoanStatus> = {

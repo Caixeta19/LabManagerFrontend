@@ -8,6 +8,7 @@ const reservationBadgeConfig: Record<ReservationStatus, { label: string; bg: str
   confirmed: { label: 'Confirmada', bg: '#D1FAE5', text: '#065F46' },
   cancelled: { label: 'Cancelada', bg: '#FEE2E2', text: '#991B1B' },
   expired: { label: 'Expirada', bg: '#F1F5F9', text: '#64748B' },
+  no_show: { label: 'Não compareceu', bg: '#FFEDD5', text: '#9A3412' },
 };
 
 const loanBadgeConfig: Record<LoanStatus, { label: string; bg: string; text: string }> = {

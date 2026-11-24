@@ -49,6 +49,7 @@ export default function AllReservations() {
               <option value="confirmed">Confirmada</option>
               <option value="cancelled">Cancelada</option>
               <option value="expired">Expirada</option>
+              <option value="no_show">Não compareceu</option>
             </select>
           </div>
           <div>

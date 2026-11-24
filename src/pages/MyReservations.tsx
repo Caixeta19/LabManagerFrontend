@@ -60,7 +60,7 @@ export default function MyReservations() {
     if (filter === 'upcoming') return (r.status === 'confirmed' || r.status === 'pending') && r.date >= todayStr;
     if (filter === 'confirmed') return r.status === 'confirmed';
     if (filter === 'pending') return r.status === 'pending';
-    if (filter === 'history') return r.status === 'cancelled' || r.status === 'expired' || r.date < todayStr;
+    if (filter === 'history') return r.status === 'cancelled' || r.status === 'expired' || r.status === 'no_show' || r.date < todayStr;
     return true;
   });
 
