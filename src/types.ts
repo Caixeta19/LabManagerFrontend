@@ -24,6 +24,8 @@ export interface Lab {
   /** Janela de reserva para ALUNO/PROFESSOR ("HH:mm"). Vazias = sem restrição; ADMIN ignora. */
   bookingOpenTime: string
   bookingCloseTime: string
+  /** Dias de funcionamento no padrão do JS (0 = domingo … 6 = sábado). Vazio = todos os dias. */
+  bookingDays: number[]
 }
 
 export interface Equipment {

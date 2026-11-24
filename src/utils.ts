@@ -78,3 +78,41 @@ export function getUserById(users: User[], id: string) {
 export function getEquipmentById(equipment: Equipment[], id: string) {
   return equipment.find((e) => e.id === id)
 }
+
+export const DIAS_CURTOS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"]
+/** Segunda primeiro, como no calendário acadêmico. */
+export const ORDEM_DIAS = [1, 2, 3, 4, 5, 6, 0]
+
+/** Dia da semana (0 = domingo) de uma data "AAAA-MM-DD", sem passar por UTC. */
+export function diaDaSemana(dateStr: string) {
+  const [y, m, d] = dateStr.split("-").map(Number)
+  return new Date(y, m - 1, d).getDay()
+}
+
+/** "Seg–Sex", "Seg, Qua, Sex", "Seg–Qua, Sáb" ou "Todos os dias". */
+export function formatarDias(dias: number[]) {
+  if (dias.length === 0 || dias.length === 7) return "Todos os dias"
+  const ordenados = ORDEM_DIAS.filter((d) => dias.includes(d))
+  const partes: string[] = []
+  let ini = 0
+  for (let i = 1; i <= ordenados.length; i++) {
+    const anterior = ORDEM_DIAS.indexOf(ordenados[i - 1])
+    if (i < ordenados.length && ORDEM_DIAS.indexOf(ordenados[i]) === anterior + 1) continue
+    const a = ordenados[ini]
+    const b = ordenados[i - 1]
+    if (a === b) partes.push(DIAS_CURTOS[a])
+    else if (i - 1 - ini === 1) partes.push(DIAS_CURTOS[a], DIAS_CURTOS[b])
+    else partes.push(`${DIAS_CURTOS[a]}–${DIAS_CURTOS[b]}`)
+    ini = i
+  }
+  return partes.join(", ")
+}
+
+/** Funcionamento do laboratório (a regra que vale nas reservas): dias e horário. Sem nada definido, a observação livre. */
+export function labHorarioResumo(lab: Lab) {
+  const temDias = lab.bookingDays.length > 0 && lab.bookingDays.length < 7
+  const temHorario = !!(lab.bookingOpenTime && lab.bookingCloseTime)
+  if (!temDias && !temHorario) return lab.hours || "Horário não informado"
+  const horario = temHorario ? `${lab.bookingOpenTime}–${lab.bookingCloseTime}` : "qualquer horário"
+  return `${formatarDias(lab.bookingDays)} · ${horario}`
+}
