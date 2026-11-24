@@ -3,6 +3,7 @@ import { useApp } from '../../context';
 import { Btn, Modal, Input, Select, EmptyState } from '../../components/ui';
 import { ApiError } from '../../api';
 import type { Lab } from '../../types';
+import LabCheckinQr from '../../components/LabCheckinQr';
 
 function splitResources(text: string) {
   return text.split(/[,\n]/).map(r => r.trim()).filter(Boolean);
@@ -20,6 +21,7 @@ function LabStatusBadge({ status }: { status: Lab['status'] }) {
 export default function AdminLabs() {
   const { state, addLab, updateLab, showToast, handleError } = useApp();
   const [modalOpen, setModalOpen] = useState(false);
+  const [qrLab, setQrLab] = useState<Lab | null>(null);
   const [editLab, setEditLab] = useState<Lab | null>(null);
   const [form, setForm] = useState({ name: '', location: '', capacity: 20, status: 'active' as Lab['status'], hours: '', description: '', resources: '', bookingOpenTime: '', bookingCloseTime: '' });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -122,6 +124,7 @@ export default function AdminLabs() {
                     <td className="px-6 py-4">
                       <div className="flex gap-2">
                         <Btn variant="ghost" size="sm" onClick={() => openEdit(l)}>Editar</Btn>
+                        <Btn variant="ghost" size="sm" onClick={() => setQrLab(l)}>QR de check-in</Btn>
                         <Btn variant="ghost" size="sm" onClick={() => toggleStatus(l)}>
                           {l.status === 'active' ? 'Desativar' : 'Ativar'}
                         </Btn>
@@ -170,6 +173,10 @@ export default function AdminLabs() {
             <Btn className="flex-1 justify-center" loading={saving} onClick={handleSave}>Salvar</Btn>
           </div>
         </div>
+      </Modal>
+
+      <Modal open={!!qrLab} onClose={() => setQrLab(null)} title={qrLab ? `QR de check-in — ${qrLab.name}` : ''} size="sm">
+        {qrLab && <LabCheckinQr lab={qrLab} />}
       </Modal>
     </div>
   );

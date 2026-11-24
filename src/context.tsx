@@ -87,6 +87,11 @@ function initialRoute(): { page: Page; params: Record<string, string> } {
     const token = new URLSearchParams(window.location.search).get("token") ?? ""
     return { page: "reset-password", params: { token } }
   }
+  // QR fixo do laboratório lido pela câmera do celular: abre a tela de check-in com o token
+  if (window.location.pathname === "/check-in") {
+    const lab = new URLSearchParams(window.location.search).get("lab") ?? ""
+    if (lab) return { page: "check-in", params: { lab } }
+  }
   return { page: "login", params: {} }
 }
 
@@ -145,6 +150,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [booting, setBooting] = useState(() => getToken() !== null)
   const [page, setPage] = useState<Page>(route.page)
   const [pageParams, setPageParams] = useState(route.params)
+  // Check-in pelo link do QR do laboratório ainda sem login: depois de entrar, vai direto para a tela de check-in
+  const pendingCheckinRef = useRef(route.page === "check-in" ? route.params : null)
   const [toasts, setToasts] = useState<ToastMessage[]>([])
 
   // Respostas de uma sessão que já terminou são descartadas
@@ -245,6 +252,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       .me()
       .then((user) => {
         if (route.page === "login") setPage("dashboard")
+        pendingCheckinRef.current = null // já logado: a tela de check-in abre agora com o token
         return startSession(user)
       })
       .catch(handleError)
@@ -264,8 +272,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     async (email: string, senha: string) => {
       setToken(await authApi.login(email, senha))
       const user = await authApi.me()
-      setPage("dashboard")
-      setPageParams({})
+      const pendingCheckin = pendingCheckinRef.current
+      pendingCheckinRef.current = null
+      setPage(pendingCheckin ? "check-in" : "dashboard")
+      setPageParams(pendingCheckin ?? {})
       await startSession(user)
       return user
     },

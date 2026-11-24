@@ -1,4 +1,4 @@
-import { request } from "./client"
+import { request, requestBlob } from "./client"
 import { labToRequest, toLab, type LabDTO, type LabInput } from "./mappers"
 
 export interface OccupiedSlot {
@@ -44,4 +44,14 @@ export async function update(id: string, input: LabInput) {
     method: "PUT",
     body: labToRequest(input),
   })
+}
+
+/** PNG do QR fixo de check-in do laboratório (ADMIN). */
+export function checkinQrCode(id: string) {
+  return requestBlob(`/laboratories/${id}/checkin-qrcode`)
+}
+
+/** Gera um novo token de check-in: o QR impresso antes deixa de valer (ADMIN). */
+export async function regenerateCheckinToken(id: string) {
+  await request(`/laboratories/${id}/checkin-token/regenerar`, { method: "POST" })
 }
