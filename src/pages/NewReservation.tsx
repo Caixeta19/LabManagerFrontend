@@ -2,7 +2,7 @@ import { useState } from "react"
 import { useApp } from "../context"
 import { Btn, Input, Select, Modal } from "../components/ui"
 import { ApiError } from "../api"
-import { formatDate, todayISO } from "../utils"
+import { diaDaSemana, formatDate, formatarDias, todayISO } from "../utils"
 import type { Lab } from "../types"
 
 // Expediente padrão para reservas ("HH:mm"), usado quando o laboratório não define a própria janela
@@ -22,9 +22,12 @@ function janelaDeReserva(isAdmin: boolean, lab?: Lab): { min: string; max: strin
 function MiniCalendar({
   selected,
   onChange,
+  diaPermitido = () => true,
 }: {
   selected: string
   onChange: (d: string) => void
+  /** Dias da semana em que o laboratório funciona; os outros ficam desabilitados. */
+  diaPermitido?: (dateStr: string) => boolean
 }) {
   const today = new Date()
 
@@ -145,7 +148,7 @@ function MiniCalendar({
           }
 
           const dateStr = pad(d)
-          const isPast = dateStr < todayStr
+          const isPast = dateStr < todayStr || !diaPermitido(dateStr)
           const isSelected = dateStr === selected
           const isToday = dateStr === todayStr
 
@@ -158,10 +161,10 @@ function MiniCalendar({
               className={`text-xs py-1.5 rounded-lg font-500 transition-colors ${
                 isSelected
                   ? "bg-primary text-white font-700"
-                  : isToday
-                    ? "border border-accent text-accent"
-                    : isPast
-                      ? "text-text-secondary/30 cursor-not-allowed"
+                  : isPast
+                    ? "text-text-secondary/30 cursor-not-allowed"
+                    : isToday
+                      ? "border border-accent text-accent"
                       : "hover:bg-bg text-text"
               }`}
             >
@@ -201,6 +204,9 @@ export default function NewReservation() {
   const isAdmin = currentUser?.role === "admin"
   const selectedLab = activeLabs.find((l) => l.id === labId)
   const janela = janelaDeReserva(isAdmin, selectedLab)
+  // Dias de funcionamento: ADMIN não tem restrição; vazio = todos os dias
+  const diasDoLab = !isAdmin && selectedLab ? selectedLab.bookingDays : []
+  const diaPermitido = (d: string) => diasDoLab.length === 0 || diasDoLab.includes(diaDaSemana(d))
 
   function validateStep1() {
     const e: Record<string, string> = {}
@@ -211,6 +217,8 @@ export default function NewReservation() {
 
     if (!date) {
       e.date = "Selecione uma data."
+    } else if (!diaPermitido(date)) {
+      e.date = `Este laboratório funciona: ${formatarDias(diasDoLab)}.`
     }
 
     if (!startTime) {
@@ -288,7 +296,9 @@ export default function NewReservation() {
     } catch (error) {
       if (
         error instanceof ApiError &&
-        (error.code === "ERR_RESERVA_001" || error.code === "ERR_RESERVA_004")
+        (error.code === "ERR_RESERVA_001" ||
+          error.code === "ERR_RESERVA_004" ||
+          error.code === "ERR_RESERVA_005")
       ) {
         setErrors({ conflict: error.message })
         setStep(1)
@@ -377,6 +387,7 @@ export default function NewReservation() {
                 </label>
 
                 <MiniCalendar
+                  diaPermitido={diaPermitido}
                   selected={date}
                   onChange={(d) => {
                     setDate(d)
@@ -425,10 +436,14 @@ export default function NewReservation() {
 
               <p className="text-xs text-text-secondary -mt-3">
                 {janela
-                  ? `Informe qualquer horário entre ${janela.min} e ${janela.max}${
+                  ? `${
+                      diasDoLab.length > 0 && diasDoLab.length < 7
+                        ? `Este laboratório funciona ${formatarDias(diasDoLab)}. `
+                        : ""
+                    }Informe qualquer horário entre ${janela.min} e ${janela.max}${
                       selectedLab?.bookingOpenTime ? " (definido para este laboratório)" : ""
                     }.`
-                  : "Como administrador, você pode reservar em qualquer horário. A reserva já nasce confirmada."}
+                  : "Como administrador, você pode reservar em qualquer dia e horário. A reserva já nasce confirmada."}
               </p>
 
               {/* =================================================

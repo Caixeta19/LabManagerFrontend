@@ -4,6 +4,7 @@ import { Btn, Modal, Input, Select, EmptyState } from '../../components/ui';
 import { ApiError } from '../../api';
 import type { Lab } from '../../types';
 import LabCheckinQr from '../../components/LabCheckinQr';
+import { DIAS_CURTOS, ORDEM_DIAS, labHorarioResumo } from '../../utils';
 
 function splitResources(text: string) {
   return text.split(/[,\n]/).map(r => r.trim()).filter(Boolean);
@@ -23,20 +24,20 @@ export default function AdminLabs() {
   const [modalOpen, setModalOpen] = useState(false);
   const [qrLab, setQrLab] = useState<Lab | null>(null);
   const [editLab, setEditLab] = useState<Lab | null>(null);
-  const [form, setForm] = useState({ name: '', location: '', capacity: 20, status: 'active' as Lab['status'], hours: '', description: '', resources: '', bookingOpenTime: '', bookingCloseTime: '' });
+  const [form, setForm] = useState({ name: '', location: '', capacity: 20, status: 'active' as Lab['status'], hours: '', description: '', resources: '', bookingOpenTime: '', bookingCloseTime: '', bookingDays: [] as number[] });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
 
   function openCreate() {
     setEditLab(null);
-    setForm({ name: '', location: '', capacity: 20, status: 'active', hours: 'Seg–Sex: 08h–20h', description: '', resources: '', bookingOpenTime: '08:00', bookingCloseTime: '20:00' });
+    setForm({ name: '', location: '', capacity: 20, status: 'active', hours: '', description: '', resources: '', bookingOpenTime: '08:00', bookingCloseTime: '20:00', bookingDays: [1, 2, 3, 4, 5] });
     setErrors({});
     setModalOpen(true);
   }
 
   function openEdit(l: Lab) {
     setEditLab(l);
-    setForm({ name: l.name, location: l.location, capacity: l.capacity, status: l.status, hours: l.hours, description: l.description, resources: l.resources.join(', '), bookingOpenTime: l.bookingOpenTime, bookingCloseTime: l.bookingCloseTime });
+    setForm({ name: l.name, location: l.location, capacity: l.capacity, status: l.status, hours: l.hours, description: l.description, resources: l.resources.join(', '), bookingOpenTime: l.bookingOpenTime, bookingCloseTime: l.bookingCloseTime, bookingDays: l.bookingDays });
     setErrors({});
     setModalOpen(true);
   }
@@ -51,6 +52,7 @@ export default function AdminLabs() {
     } else if (form.bookingOpenTime && form.bookingOpenTime >= form.bookingCloseTime) {
       missing.bookingWindow = 'A abertura deve ser antes do fechamento.';
     }
+    if (form.bookingDays.length === 0) missing.bookingDays = 'Selecione ao menos um dia de funcionamento.';
     setErrors(missing);
     if (Object.keys(missing).length) return;
 
@@ -104,7 +106,7 @@ export default function AdminLabs() {
                 <th className="px-6 py-3">Nome</th>
                 <th className="px-6 py-3">Localização</th>
                 <th className="px-6 py-3">Capacidade</th>
-                <th className="px-6 py-3">Reservas</th>
+                <th className="px-6 py-3">Funcionamento</th>
                 <th className="px-6 py-3">Status</th>
                 <th className="px-6 py-3">Equipamentos</th>
                 <th className="px-6 py-3">Ações</th>
@@ -118,7 +120,7 @@ export default function AdminLabs() {
                     <td className="px-6 py-4 text-sm font-600 text-text">{l.name}</td>
                     <td className="px-6 py-4 text-sm text-text-secondary">{l.location}</td>
                     <td className="px-6 py-4 text-sm text-text-secondary">{l.capacity} pessoas</td>
-                    <td className="px-6 py-4 text-sm text-text-secondary">{l.bookingOpenTime ? `${l.bookingOpenTime} – ${l.bookingCloseTime}` : 'Livre'}</td>
+                    <td className="px-6 py-4 text-sm text-text-secondary">{labHorarioResumo(l)}</td>
                     <td className="px-6 py-4"><LabStatusBadge status={l.status} /></td>
                     <td className="px-6 py-4 text-sm text-text-secondary">{eqCount} equipamento(s)</td>
                     <td className="px-6 py-4">
@@ -143,15 +145,35 @@ export default function AdminLabs() {
           <Input label="Nome" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Ex: Lab. de Redes" error={errors.name} />
           <Input label="Localização" value={form.location} onChange={e => setForm(f => ({ ...f, location: e.target.value }))} placeholder="Ex: Bloco A — Sala 101" error={errors.localization} />
           <Input label="Capacidade (pessoas)" type="number" value={form.capacity} onChange={e => setForm(f => ({ ...f, capacity: Number(e.target.value) }))} error={errors.capacity} />
-          <Input label="Horário de funcionamento" value={form.hours} onChange={e => setForm(f => ({ ...f, hours: e.target.value }))} placeholder="Ex: Seg–Sex: 08h–20h" error={errors.openingHours} />
+          <Input label="Observação sobre o horário (opcional)" value={form.hours} onChange={e => setForm(f => ({ ...f, hours: e.target.value }))} placeholder="Ex: Fechado nos feriados" error={errors.openingHours} />
+          <div>
+            <label className="text-sm font-600 text-text block mb-1.5">Dias de funcionamento</label>
+            <div className="flex flex-wrap gap-2">
+              {ORDEM_DIAS.map(d => {
+                const ativo = form.bookingDays.includes(d);
+                return (
+                  <button
+                    key={d}
+                    type="button"
+                    aria-pressed={ativo}
+                    onClick={() => setForm(f => ({ ...f, bookingDays: ativo ? f.bookingDays.filter(x => x !== d) : [...f.bookingDays, d] }))}
+                    className={`px-3 py-1.5 text-sm font-600 rounded-lg border transition-colors ${ativo ? 'bg-primary text-white border-primary' : 'bg-white text-text-secondary border-border hover:bg-bg'}`}
+                  >
+                    {DIAS_CURTOS[d]}
+                  </button>
+                );
+              })}
+            </div>
+            {errors.bookingDays && <span className="text-xs text-danger mt-1 block">{errors.bookingDays}</span>}
+          </div>
           <div>
             <div className="grid grid-cols-2 gap-4">
-              <Input label="Reservas a partir de" type="time" step={60} value={form.bookingOpenTime} onChange={e => setForm(f => ({ ...f, bookingOpenTime: e.target.value }))} />
-              <Input label="Reservas até" type="time" step={60} value={form.bookingCloseTime} onChange={e => setForm(f => ({ ...f, bookingCloseTime: e.target.value }))} />
+              <Input label="Abre às" type="time" step={60} value={form.bookingOpenTime} onChange={e => setForm(f => ({ ...f, bookingOpenTime: e.target.value }))} />
+              <Input label="Fecha às" type="time" step={60} value={form.bookingCloseTime} onChange={e => setForm(f => ({ ...f, bookingCloseTime: e.target.value }))} />
             </div>
             {errors.bookingWindow
               ? <span className="text-xs text-danger mt-1 block">{errors.bookingWindow}</span>
-              : <span className="text-xs text-text-secondary mt-1 block">Alunos e professores só reservam nesse horário, com início e fim no mesmo dia. Deixe vazio para não restringir. O administrador não tem restrição.</span>}
+              : <span className="text-xs text-text-secondary mt-1 block">Alunos e professores só reservam nesses dias e horário, com início e fim no mesmo dia. Deixe o horário vazio para não restringir a hora. O administrador não tem restrição.</span>}
           </div>
           <Input label="Recursos" value={form.resources} onChange={e => setForm(f => ({ ...f, resources: e.target.value }))} placeholder="Separados por vírgula. Ex: Projetor, Quadro branco" />
           <div className="flex flex-col gap-1.5">

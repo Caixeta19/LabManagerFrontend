@@ -3,7 +3,7 @@ import { useApp } from '../context';
 import { Btn, EmptyState } from '../components/ui';
 import { labsApi } from '../api';
 import type { OccupiedSlot } from '../api/labs';
-import { formatDate } from '../utils';
+import { formatDate, labHorarioResumo } from '../utils';
 import type { Lab } from '../types';
 
 function LabStatusDot({ status }: { status: Lab['status'] }) {
@@ -103,7 +103,7 @@ export default function Labs() {
                       <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" strokeLinecap="round" />
                       </svg>
-                      {lab.hours || 'Horário não informado'}
+                      {labHorarioResumo(lab)}
                     </span>
                   </div>
 
@@ -217,8 +217,10 @@ export function LabDetail() {
           <div className="space-y-4">
             <div className="bg-bg rounded-xl p-4 space-y-3">
               <div><div className="text-xs text-text-secondary">Capacidade</div><div className="text-sm font-600 text-text mt-0.5">{lab.capacity} pessoas</div></div>
-              <div><div className="text-xs text-text-secondary">Funcionamento</div><div className="text-sm font-600 text-text mt-0.5">{lab.hours || 'Não informado'}</div></div>
-              <div><div className="text-xs text-text-secondary">Reservas</div><div className="text-sm font-600 text-text mt-0.5">{lab.bookingOpenTime ? `${lab.bookingOpenTime} às ${lab.bookingCloseTime}` : 'Qualquer horário'}</div></div>
+              <div><div className="text-xs text-text-secondary">Funcionamento</div><div className="text-sm font-600 text-text mt-0.5">{labHorarioResumo(lab)}</div></div>
+              {lab.hours && (
+                <div><div className="text-xs text-text-secondary">Observação</div><div className="text-sm font-600 text-text mt-0.5">{lab.hours}</div></div>
+              )}
               <div><div className="text-xs text-text-secondary mb-0.5">Status</div>
                 <LabStatusDot status={lab.status} />
               </div>

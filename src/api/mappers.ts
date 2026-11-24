@@ -21,6 +21,16 @@ export type ApiReserveStatus =
   | "CANCELADA"
   | "EXPIRADA"
   | "NAO_COMPARECEU"
+export type ApiDayOfWeek =
+  | "SUNDAY"
+  | "MONDAY"
+  | "TUESDAY"
+  | "WEDNESDAY"
+  | "THURSDAY"
+  | "FRIDAY"
+  | "SATURDAY"
+/** Índice = dia do JS (0 = domingo). */
+const API_DAYS: ApiDayOfWeek[] = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"]
 export type ApiLoanStatus = "ATIVO" | "ATRASADO" | "DEVOLVIDO"
 
 export interface UserDTO {
@@ -45,6 +55,7 @@ export interface LabDTO {
   resources: string[]
   bookingOpenTime: string | null
   bookingCloseTime: string | null
+  bookingDays: ApiDayOfWeek[] | null
 }
 
 export interface EquipmentDTO {
@@ -181,6 +192,7 @@ export function toLab(dto: LabDTO): Lab {
     hours: dto.openingHours ?? "",
     bookingOpenTime: dto.bookingOpenTime?.slice(0, 5) ?? "",
     bookingCloseTime: dto.bookingCloseTime?.slice(0, 5) ?? "",
+    bookingDays: (dto.bookingDays ?? []).map((d) => API_DAYS.indexOf(d)).filter((d) => d >= 0),
   }
 }
 
@@ -240,6 +252,7 @@ export function labToRequest(lab: LabInput) {
     status: LAB_STATUS_TO_API[lab.status],
     bookingOpenTime: lab.bookingOpenTime || null,
     bookingCloseTime: lab.bookingCloseTime || null,
+    bookingDays: lab.bookingDays.map((d) => API_DAYS[d]),
   }
 }
 
@@ -264,6 +277,7 @@ export type LabInput = Pick<
   | "status"
   | "bookingOpenTime"
   | "bookingCloseTime"
+  | "bookingDays"
 >
 
 export type EquipmentInput = Pick<
