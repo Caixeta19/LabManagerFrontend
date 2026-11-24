@@ -23,7 +23,7 @@ export default function AdminReservations() {
           {[
             {
               label: 'Status', value: filterStatus, onChange: setFilterStatus,
-              options: [['', 'Todos'], ['pending', 'Pendente'], ['confirmed', 'Confirmada'], ['cancelled', 'Cancelada'], ['expired', 'Expirada']],
+              options: [['', 'Todos'], ['pending', 'Pendente'], ['confirmed', 'Confirmada'], ['cancelled', 'Cancelada'], ['expired', 'Expirada'], ['no_show', 'Não compareceu']],
             },
             {
               label: 'Laboratório', value: filterLab, onChange: setFilterLab,
