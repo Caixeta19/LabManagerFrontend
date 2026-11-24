@@ -1,13 +1,13 @@
 import { useState } from "react"
 import { useApp } from "../context"
 import { Btn, Input } from "../components/ui"
-import { ApiError, authApi } from "../api"
+import { ApiError } from "../api"
 import { checkPassword } from "../utils"
 
 import logoImg from "@/imports/ChatGPT_Image_19_de_ago._de_2026__20_24_51.png"
 
 export default function Register() {
-  const { navigate, showToast, handleError } = useApp()
+  const { navigate, showToast, handleError, register } = useApp()
 
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
@@ -131,16 +131,16 @@ export default function Register() {
     setLoading(true)
 
     try {
-      await authApi.register({
+      // Cadastra e já entra no sistema (sessão salva como no login)
+      const user = await register({
         name: trimmedName,
         email: normalizedEmail,
         password,
         registration: trimmedRegistration,
       })
 
-      showToast("Conta criada com sucesso!")
-
-      navigate("login")
+      // null: conta criada, mas o login automático falhou (o contexto já avisou e foi para o login)
+      if (user) showToast("Conta criada! Bem-vindo(a)")
     } catch (error) {
       if (error instanceof ApiError && error.code === "ERR_USER_001") {
         setErrors({ registration: error.message })

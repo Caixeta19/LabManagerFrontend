@@ -64,6 +64,11 @@ interface AppContextValue {
   handleError: (error: unknown) => void
   reload: (keys?: DataKey[]) => Promise<void>
   login: (email: string, senha: string) => Promise<User>
+  /**
+   * Cria a conta e já entra no sistema. Erros do cadastro são lançados normalmente.
+   * Se só o login automático falhar, avisa, manda para o login e retorna `null` (a conta já existe).
+   */
+  register: (input: RegisterInput) => Promise<User | null>
   logout: () => void
   addReservation: (input: NewReservationInput) => Promise<void>
   cancelReservation: (id: string) => Promise<void>
@@ -76,6 +81,8 @@ interface AppContextValue {
   addEquipment: (input: EquipmentInput) => Promise<void>
   updateEquipment: (id: string, input: EquipmentInput) => Promise<void>
 }
+
+export type RegisterInput = Parameters<typeof authApi.register>[0]
 
 const AppContext = createContext<AppContextValue>(null!)
 
@@ -272,6 +279,25 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     [startSession],
   )
 
+  const register = useCallback(
+    async (input: RegisterInput) => {
+      await authApi.register(input)
+      try {
+        return await login(input.email, input.password)
+      } catch {
+        // A conta foi criada; só a entrada automática falhou
+        clearToken()
+        userRef.current = null
+        setCurrentUser(null)
+        setPage("login")
+        setPageParams({})
+        showToast("Conta criada, mas não foi possível entrar automaticamente. Faça login.", "info")
+        return null
+      }
+    },
+    [login, showToast],
+  )
+
   const addReservation = useCallback(
     async (input: NewReservationInput) => {
       await reservationsApi.create(input)
@@ -401,6 +427,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         handleError,
         reload: reloadData,
         login,
+        register,
         logout: endSession,
         addReservation,
         cancelReservation,
