@@ -42,6 +42,8 @@ export interface LabDTO {
   status: ApiLabStatus
   openingHours: string | null
   resources: string[]
+  bookingOpenTime: string | null
+  bookingCloseTime: string | null
 }
 
 export interface EquipmentDTO {
@@ -175,6 +177,8 @@ export function toLab(dto: LabDTO): Lab {
     resources: dto.resources,
     equipmentIds: [],
     hours: dto.openingHours ?? "",
+    bookingOpenTime: dto.bookingOpenTime?.slice(0, 5) ?? "",
+    bookingCloseTime: dto.bookingCloseTime?.slice(0, 5) ?? "",
   }
 }
 
@@ -232,6 +236,8 @@ export function labToRequest(lab: LabInput) {
     openingHours: lab.hours,
     resources: lab.resources,
     status: LAB_STATUS_TO_API[lab.status],
+    bookingOpenTime: lab.bookingOpenTime || null,
+    bookingCloseTime: lab.bookingCloseTime || null,
   }
 }
 
@@ -254,6 +260,8 @@ export type LabInput = Pick<
   | "hours"
   | "resources"
   | "status"
+  | "bookingOpenTime"
+  | "bookingCloseTime"
 >
 
 export type EquipmentInput = Pick<

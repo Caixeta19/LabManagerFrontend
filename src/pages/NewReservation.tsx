@@ -3,10 +3,20 @@ import { useApp } from "../context"
 import { Btn, Input, Select, Modal } from "../components/ui"
 import { ApiError } from "../api"
 import { formatDate, todayISO } from "../utils"
+import type { Lab } from "../types"
 
-// Expediente permitido para reservas ("HH:mm")
+// Expediente padrão para reservas ("HH:mm"), usado quando o laboratório não define a própria janela
 const HORA_MIN = "07:00"
 const HORA_MAX = "21:00"
+
+/** Janela que vale para o usuário: ADMIN não tem restrição; os demais seguem a do laboratório. */
+function janelaDeReserva(isAdmin: boolean, lab?: Lab): { min: string; max: string } | null {
+  if (isAdmin) return null
+  if (lab?.bookingOpenTime && lab.bookingCloseTime) {
+    return { min: lab.bookingOpenTime, max: lab.bookingCloseTime }
+  }
+  return { min: HORA_MIN, max: HORA_MAX }
+}
 
 // Calendar mini-component
 function MiniCalendar({
@@ -188,6 +198,9 @@ export default function NewReservation() {
   const [successModal, setSuccessModal] = useState(false)
 
   const activeLabs = state.labs.filter((l) => l.status === "active")
+  const isAdmin = currentUser?.role === "admin"
+  const selectedLab = activeLabs.find((l) => l.id === labId)
+  const janela = janelaDeReserva(isAdmin, selectedLab)
 
   function validateStep1() {
     const e: Record<string, string> = {}
@@ -208,15 +221,17 @@ export default function NewReservation() {
       e.endTime = "Selecione o horário de término."
     }
 
-    const foraDoExpediente = (t: string) => t < HORA_MIN || t > HORA_MAX
-    const msgExpediente = `Horário permitido: ${HORA_MIN} às ${HORA_MAX}.`
+    if (janela) {
+      const foraDoExpediente = (t: string) => t < janela.min || t > janela.max
+      const msgExpediente = `Horário permitido: ${janela.min} às ${janela.max}.`
 
-    if (startTime && foraDoExpediente(startTime)) {
-      e.startTime = msgExpediente
-    }
+      if (startTime && foraDoExpediente(startTime)) {
+        e.startTime = msgExpediente
+      }
 
-    if (endTime && foraDoExpediente(endTime)) {
-      e.endTime = msgExpediente
+      if (endTime && foraDoExpediente(endTime)) {
+        e.endTime = msgExpediente
+      }
     }
 
     if (startTime && endTime && startTime >= endTime && !e.endTime) {
@@ -271,7 +286,10 @@ export default function NewReservation() {
 
       setSuccessModal(true)
     } catch (error) {
-      if (error instanceof ApiError && error.code === "ERR_RESERVA_001") {
+      if (
+        error instanceof ApiError &&
+        (error.code === "ERR_RESERVA_001" || error.code === "ERR_RESERVA_004")
+      ) {
         setErrors({ conflict: error.message })
         setStep(1)
       } else if (error instanceof ApiError && error.status === 422) {
@@ -286,8 +304,6 @@ export default function NewReservation() {
       setProcessing(false)
     }
   }
-
-  const selectedLab = activeLabs.find((l) => l.id === labId)
 
   return (
     <div className="p-8 max-w-3xl">
@@ -381,8 +397,8 @@ export default function NewReservation() {
                 <Input
                   type="time"
                   step={60}
-                  min={HORA_MIN}
-                  max="20:59"
+                  min={janela?.min}
+                  max={janela?.max}
                   label="Horário de início"
                   value={startTime}
                   onChange={(e) => {
@@ -395,8 +411,8 @@ export default function NewReservation() {
                 <Input
                   type="time"
                   step={60}
-                  min="07:01"
-                  max={HORA_MAX}
+                  min={janela?.min}
+                  max={janela?.max}
                   label="Horário de término"
                   value={endTime}
                   onChange={(e) => {
@@ -408,7 +424,11 @@ export default function NewReservation() {
               </div>
 
               <p className="text-xs text-text-secondary -mt-3">
-                Informe qualquer horário entre {HORA_MIN} e {HORA_MAX}.
+                {janela
+                  ? `Informe qualquer horário entre ${janela.min} e ${janela.max}${
+                      selectedLab?.bookingOpenTime ? " (definido para este laboratório)" : ""
+                    }.`
+                  : "Como administrador, você pode reservar em qualquer horário. A reserva já nasce confirmada."}
               </p>
 
               {/* =================================================
@@ -571,7 +591,9 @@ export default function NewReservation() {
 
                 {
                   label: "Status inicial",
-                  value: "Pendente (aguarda confirmação)",
+                  value: isAdmin
+                    ? "Confirmada"
+                    : "Pendente (aguarda confirmação)",
                 },
               ].map(({ label, value }) => (
                 <div
@@ -598,9 +620,9 @@ export default function NewReservation() {
             </div>
 
             <div className="mt-4 p-4 rounded-xl bg-bg text-xs text-text-secondary">
-              A reserva ficará pendente até você confirmá-la pelo link enviado
-              por e-mail cerca de 1 hora antes do início. Sem a confirmação, ela
-              expira e o check-in não funciona.
+              {isAdmin
+                ? "Reservas feitas pelo administrador já nascem confirmadas: não há e-mail de confirmação."
+                : "A reserva ficará pendente até você confirmá-la pelo link enviado por e-mail até 1 hora antes do início. Sem a confirmação, ela expira e o check-in não funciona."}
             </div>
           </div>
 
@@ -666,8 +688,17 @@ export default function NewReservation() {
           </div>
 
           <p className="text-sm text-text-secondary mb-6">
-            O status está <strong>Pendente</strong>. Você receberá o link de
-            confirmação por e-mail cerca de 1 hora antes do início.
+            {isAdmin ? (
+              <>
+                O status está <strong>Confirmada</strong>. Não é preciso
+                confirmar por e-mail.
+              </>
+            ) : (
+              <>
+                O status está <strong>Pendente</strong>. Você receberá o link de
+                confirmação por e-mail até 1 hora antes do início.
+              </>
+            )}
           </p>
 
           <Btn

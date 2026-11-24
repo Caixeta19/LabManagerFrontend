@@ -21,6 +21,9 @@ export interface Lab {
   resources: string[]
   equipmentIds: string[]
   hours: string
+  /** Janela de reserva para ALUNO/PROFESSOR ("HH:mm"). Vazias = sem restrição; ADMIN ignora. */
+  bookingOpenTime: string
+  bookingCloseTime: string
 }
 
 export interface Equipment {

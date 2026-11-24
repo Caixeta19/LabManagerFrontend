@@ -184,7 +184,7 @@ export function ReservationDetail() {
   const lab = getLabById(state.labs, r.labId);
   const user = state.users.find(u => u.id === r.userId);
 
-  // A rota do QR Code só atende o dono; o cancelamento, o dono ou o ADMIN
+  // QR Code e cancelamento: o dono ou o ADMIN
   const isOwner = r.userId === currentUser?.id;
   const isAdmin = currentUser?.role === 'admin';
   const backPage = isOwner ? 'my-reservations' : isAdmin ? 'admin-reservations' : 'all-reservations';
@@ -242,7 +242,7 @@ export function ReservationDetail() {
 
         {isOpen(r) && (isOwner || isAdmin) && (
           <div className="flex gap-3 pt-2">
-            {isOwner && <Btn className="flex-1 justify-center" onClick={() => setShowQR(true)}>Ver QR Code</Btn>}
+            <Btn className="flex-1 justify-center" onClick={() => setShowQR(true)}>Ver QR Code</Btn>
             <Btn variant="danger" className="flex-1 justify-center" onClick={() => setCancelTarget(r.id)}>Cancelar reserva</Btn>
           </div>
         )}

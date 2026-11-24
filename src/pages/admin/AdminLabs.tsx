@@ -21,20 +21,20 @@ export default function AdminLabs() {
   const { state, addLab, updateLab, showToast, handleError } = useApp();
   const [modalOpen, setModalOpen] = useState(false);
   const [editLab, setEditLab] = useState<Lab | null>(null);
-  const [form, setForm] = useState({ name: '', location: '', capacity: 20, status: 'active' as Lab['status'], hours: '', description: '', resources: '' });
+  const [form, setForm] = useState({ name: '', location: '', capacity: 20, status: 'active' as Lab['status'], hours: '', description: '', resources: '', bookingOpenTime: '', bookingCloseTime: '' });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
 
   function openCreate() {
     setEditLab(null);
-    setForm({ name: '', location: '', capacity: 20, status: 'active', hours: 'Seg–Sex: 08h–20h', description: '', resources: '' });
+    setForm({ name: '', location: '', capacity: 20, status: 'active', hours: 'Seg–Sex: 08h–20h', description: '', resources: '', bookingOpenTime: '08:00', bookingCloseTime: '20:00' });
     setErrors({});
     setModalOpen(true);
   }
 
   function openEdit(l: Lab) {
     setEditLab(l);
-    setForm({ name: l.name, location: l.location, capacity: l.capacity, status: l.status, hours: l.hours, description: l.description, resources: l.resources.join(', ') });
+    setForm({ name: l.name, location: l.location, capacity: l.capacity, status: l.status, hours: l.hours, description: l.description, resources: l.resources.join(', '), bookingOpenTime: l.bookingOpenTime, bookingCloseTime: l.bookingCloseTime });
     setErrors({});
     setModalOpen(true);
   }
@@ -44,6 +44,11 @@ export default function AdminLabs() {
     if (!form.name.trim()) missing.name = 'Informe o nome.';
     if (!form.location.trim()) missing.localization = 'Informe a localização.';
     if (form.capacity <= 0) missing.capacity = 'A capacidade deve ser maior que zero.';
+    if (!!form.bookingOpenTime !== !!form.bookingCloseTime) {
+      missing.bookingWindow = 'Informe a abertura e o fechamento, ou deixe os dois vazios.';
+    } else if (form.bookingOpenTime && form.bookingOpenTime >= form.bookingCloseTime) {
+      missing.bookingWindow = 'A abertura deve ser antes do fechamento.';
+    }
     setErrors(missing);
     if (Object.keys(missing).length) return;
 
@@ -62,6 +67,8 @@ export default function AdminLabs() {
     } catch (error) {
       if (error instanceof ApiError && error.status === 422) {
         setErrors(error.fields);
+      } else if (error instanceof ApiError && error.code === 'ERR_LAB_003') {
+        setErrors({ bookingWindow: error.message });
       } else {
         handleError(error);
       }
@@ -95,6 +102,7 @@ export default function AdminLabs() {
                 <th className="px-6 py-3">Nome</th>
                 <th className="px-6 py-3">Localização</th>
                 <th className="px-6 py-3">Capacidade</th>
+                <th className="px-6 py-3">Reservas</th>
                 <th className="px-6 py-3">Status</th>
                 <th className="px-6 py-3">Equipamentos</th>
                 <th className="px-6 py-3">Ações</th>
@@ -108,6 +116,7 @@ export default function AdminLabs() {
                     <td className="px-6 py-4 text-sm font-600 text-text">{l.name}</td>
                     <td className="px-6 py-4 text-sm text-text-secondary">{l.location}</td>
                     <td className="px-6 py-4 text-sm text-text-secondary">{l.capacity} pessoas</td>
+                    <td className="px-6 py-4 text-sm text-text-secondary">{l.bookingOpenTime ? `${l.bookingOpenTime} – ${l.bookingCloseTime}` : 'Livre'}</td>
                     <td className="px-6 py-4"><LabStatusBadge status={l.status} /></td>
                     <td className="px-6 py-4 text-sm text-text-secondary">{eqCount} equipamento(s)</td>
                     <td className="px-6 py-4">
@@ -132,6 +141,15 @@ export default function AdminLabs() {
           <Input label="Localização" value={form.location} onChange={e => setForm(f => ({ ...f, location: e.target.value }))} placeholder="Ex: Bloco A — Sala 101" error={errors.localization} />
           <Input label="Capacidade (pessoas)" type="number" value={form.capacity} onChange={e => setForm(f => ({ ...f, capacity: Number(e.target.value) }))} error={errors.capacity} />
           <Input label="Horário de funcionamento" value={form.hours} onChange={e => setForm(f => ({ ...f, hours: e.target.value }))} placeholder="Ex: Seg–Sex: 08h–20h" error={errors.openingHours} />
+          <div>
+            <div className="grid grid-cols-2 gap-4">
+              <Input label="Reservas a partir de" type="time" step={60} value={form.bookingOpenTime} onChange={e => setForm(f => ({ ...f, bookingOpenTime: e.target.value }))} />
+              <Input label="Reservas até" type="time" step={60} value={form.bookingCloseTime} onChange={e => setForm(f => ({ ...f, bookingCloseTime: e.target.value }))} />
+            </div>
+            {errors.bookingWindow
+              ? <span className="text-xs text-danger mt-1 block">{errors.bookingWindow}</span>
+              : <span className="text-xs text-text-secondary mt-1 block">Alunos e professores só reservam nesse horário, com início e fim no mesmo dia. Deixe vazio para não restringir. O administrador não tem restrição.</span>}
+          </div>
           <Input label="Recursos" value={form.resources} onChange={e => setForm(f => ({ ...f, resources: e.target.value }))} placeholder="Separados por vírgula. Ex: Projetor, Quadro branco" />
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-600 text-text">Descrição</label>
