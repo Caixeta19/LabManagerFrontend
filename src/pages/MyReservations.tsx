@@ -236,7 +236,7 @@ export function ReservationDetail() {
 
         {r.status === 'pending' && isOwner && (
           <div className="p-4 rounded-xl bg-bg border border-border">
-            <p className="text-sm text-text-secondary">Confirme a reserva pelo link enviado por e-mail cerca de 1 hora antes do início. Sem a confirmação, o check-in não funciona.</p>
+            <p className="text-sm text-text-secondary">Confirme a reserva pelo link enviado por e-mail até 1 hora antes do início. Sem a confirmação, o check-in não funciona.</p>
           </div>
         )}
 
